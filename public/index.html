@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1; --primary-hover: #4f46e5;
+            --secondary: #E31E24; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --bg: #030712; --card: rgba(30,41,59,0.5); --border: rgba(255,255,255,0.08);
+            --text: #f8fafc; --text-dim: #94a3b8; --sidebar: rgba(17,24,39,0.8);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+        
+        .mesh {
+            position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
+            background: radial-gradient(circle at 10% 20%, rgba(99,102,241,0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(16,185,129,0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 50% 50%, rgba(15,23,42,1) 0%, rgba(3,7,18,1) 100%);
+        }
+
+        /* --- Login Screen --- */
+        #login-view { display:flex; align-items:center; justify-content:center; height:100vh; }
+        .login-card {
+            background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: 24px; padding: 40px; width: 100%; max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:30px; }
+        .logo-box { width:40px; height:40px; background:var(--primary); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; box-shadow:0 0 20px rgba(99,102,241,0.4); }
+        .logo h2 { font-size:20px; font-weight:800; letter-spacing:-0.5px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-dim); }
+        input {
+            width: 100%; padding: 14px 16px; border-radius: 12px;
+            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border);
+            color: var(--text); font-family: inherit; font-size: 14px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        
+        button {
+            width: 100%; padding: 14px; border-radius: 12px; border: none;
+            background: var(--primary); color: white; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(99,102,241,0.6); }
+        .error { background:rgba(239,68,68,0.1); color:#ef4444; padding:10px; border-radius:8px; font-size:13px; margin-bottom:20px; display:none; text-align:center;}
+
+        /* --- Dashboard Screen --- */
+        #dashboard-view { display:none; height:100vh; }
+        aside { width:260px; background:var(--sidebar); backdrop-filter:blur(20px); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:30px 20px; }
+        main { flex-grow:1; padding:40px; overflow-y:auto; }
+        
+        .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; margin-bottom:40px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:24px; backdrop-filter:blur(10px); }
+        .card-title { font-size:13px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom: 10px; display:block; }
+        .card-value { font-size:36px; font-weight:800; color:var(--text); }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-dim); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        .badge { background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700;}
+        .logout-btn { background:rgba(239,68,68,0.1); color:#ef4444; width:auto; padding:8px 12px; margin-top:auto;}
+    </style>
+</head>
+<body>
+    <div class="mesh"></div>
+
+    <!-- LOGIN VIEW -->
+    <div id="login-view">
+        <div class="login-card">
+            <div class="logo">
+                <div class="logo-box">⚡</div>
+                <div><h2>Command Center</h2></div>
+            </div>
+            <div class="error" id="login-error"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+            <div style="text-align: center; margin-top: 15px;">
+                <button type="button" id="seed-btn" style="background:transparent; color:var(--text-dim); font-size: 12px; box-shadow:none;">Run Initial Setup (Seed DB)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view" style="display: none; display: flex;">
+        <aside>
+            <div class="logo" style="justify-content: flex-start;">
+                <div class="logo-box" style="width:30px;height:30px;font-size:16px;">⚡</div>
+                <div><h2 style="font-size:16px;">COMMAND</h2></div>
+            </div>
+            <nav style="flex-grow: 1; margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
+                <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:rgba(255,255,255,0.05); border-radius:8px; font-size:14px; font-weight:600;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Overview
+                </a>
+                <a href="/rvcn-dashboard/index.html" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--dim); text-decoration:none; border-radius:8px; font-size:14px; font-weight:600; transition:0.2s;" onmouseover="this.style.color='var(--text)'; this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.color='var(--dim)'; this.style.background='transparent'">
+                    <div style="width:20px;height:20px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:10px;font-weight:bold;">R</div>
+                    RVCN Dashboard
+                </a>
+            </nav>
+
+            <div style="color:var(--text-dim); font-size:13px; margin-bottom: 20px; margin-top: 20px;">
+                Role: <span id="user-role" class="badge"></span>
+            </div>
+            
+            <button class="logout-btn" id="logout-btn">Logout</button>
+        </aside>
+        
+        <main>
+            <h1 style="font-size:28px; margin-bottom: 8px;">Overview</h1>
+            <p style="color:var(--text-dim); margin-bottom: 40px;">Real-time intelligence from your chatbot ecosystem.</p>
+            
+            <div class="grid">
+                <div class="card">
+                    <span class="card-title">Total Leads</span>
+                    <div class="card-value" id="stat-leads">-</div>
+                </div>
+                <div class="card">
+                    <span class="card-title">Total Interactions</span>
+                    <div class="card-value" id="stat-interactions">-</div>
+                </div>
+                <div class="card" id="card-institutes" style="display:none;">
+                    <span class="card-title">Active Institutes</span>
+                    <div class="card-value" id="stat-institutes">-</div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 30px;">
+                <span class="card-title">Recent Leads</span>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th id="th-institute" style="display:none;">Institute</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-body">
+                            <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        
+        if (token) {
+            showDashboard();
+        }
+
+        // --- Login Form ---
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.style.display = 'none';
+            
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: e.target.username.value,
+                    password: e.target.password.value
+                })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('role', data.role);
+                window.location.reload();
+            } else {
+                errorDiv.textContent = data.error;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // --- Seed DB ---
+        document.getElementById('seed-btn').addEventListener('click', async () => {
+            const res = await fetch('/api/setup', { method: 'POST' });
+            const data = await res.json();
+            alert(data.message || data.error);
+        });
+
+        // --- Logout ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.reload();
+        });
+
+        // --- Load Dashboard ---
+        async function showDashboard() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'flex';
+            
+            document.getElementById('user-role').textContent = role === 'super_admin' ? 'Super Admin' : 'Institute Admin';
+            if (role === 'super_admin') {
+                document.getElementById('card-institutes').style.display = 'block';
+                document.getElementById('th-institute').style.display = 'table-cell';
+            }
+
+            try {
+                // Fetch Stats
+                const statRes = await fetch('/api/dashboard/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (statRes.status === 401 || statRes.status === 403) {
+                    localStorage.clear(); window.location.reload(); return;
+                }
+                const stats = await statRes.json();
+                document.getElementById('stat-leads').textContent = stats.leads;
+                document.getElementById('stat-interactions').textContent = stats.interactions;
+                if (role === 'super_admin') document.getElementById('stat-institutes').textContent = stats.institutes;
+
+                // Fetch Leads
+                const leadsRes = await fetch('/api/dashboard/leads', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const leads = await leadsRes.json();
+                
+                const tbody = document.getElementById('leads-body');
+                tbody.innerHTML = '';
+                
+                if (leads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">No leads generated yet.</td></tr>';
+                } else {
+                    leads.forEach(lead => {
+                        const tr = document.createElement('tr');
+                        const data = lead.leadData || {};
+                        let html = `<td>${new Date(lead.createdAt).toLocaleString()}</td>`;
+                        if (role === 'super_admin') html += `<td><span class="badge">${lead.instituteId}</span></td>`;
+                        html += `<td style="font-weight:600; color:var(--text);">${data.name || '-'}</td>`;
+                        html += `<td>${data.email || '-'}</td>`;
+                        html += `<td>${data.phone || '-'}</td>`;
+                        tr.innerHTML = html;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('leads-body').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error loading data</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Test Page</title>
+    <!-- Load Chatbot CSS -->
+    <link rel="stylesheet" href="file:///c:/Users/HP/Downloads/rvcn with dash v1/rvcn-chatbot/style.css">
+</head>
+<body>
+    <h1>Welcome to the Test Site</h1>
+    <p>This page loads the RVCN chatbot locally so we can test the telemetry.</p>
+    
+    <!-- Chatbot Container -->
+    <div id="rvce-chatbot-container"></div>
+    
+    <!-- Load Chatbot JS -->
+    <script>
+        // Setup config variables that the WordPress plugin normally injects
+        window.rvcnChatbotConfig = {
+            wpRestUrl: "",
+            vercelUrl: "http://localhost:3000",
+            logoUrl: "file:///c:/Users/HP/Downloads/rvcn with dash v1/rvcn-chatbot/logo.png"
+        };
+    </script>
+    <script src="file:///c:/Users/HP/Downloads/rvcn with dash v1/rvcn-chatbot/chatbot-data.js"></script>
+    <script src="file:///c:/Users/HP/Downloads/rvcn with dash v1/rvcn-chatbot/telemetry.js"></script>
+    <script src="file:///c:/Users/HP/Downloads/rvcn with dash v1/rvcn-chatbot/script.js"></script>
+</body>
+</html>
