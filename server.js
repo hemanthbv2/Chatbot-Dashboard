@@ -9,8 +9,8 @@ const path = require('path');
 // Models
 const User = require('./models/User');
 const Institute = require('./models/Institute');
-const Lead = require('./models/Lead');
-const Interaction = require('./models/Interaction');
+// Lead and Interaction are dynamically loaded per tenant to separate databases
+const { getTenantModel } = require('./utils/tenantDb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -136,8 +136,14 @@ app.post('/api/logs', async (req, res) => {
             });
         }
 
-        if (leadDocs.length > 0) await Lead.insertMany(leadDocs);
-        if (interactionDocs.length > 0) await Interaction.insertMany(interactionDocs);
+        if (leadDocs.length > 0) {
+            const TenantLead = getTenantModel(institute_id, 'Lead');
+            await TenantLead.insertMany(leadDocs);
+        }
+        if (interactionDocs.length > 0) {
+            const TenantInteraction = getTenantModel(institute_id, 'Interaction');
+            await TenantInteraction.insertMany(interactionDocs);
+        }
 
         res.json({ success: true, message: 'Logs processed successfully' });
     } catch (err) {
@@ -149,12 +155,25 @@ app.post('/api/logs', async (req, res) => {
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
     try {
         const { role, instituteId } = req.user;
-        const query = role === 'super_admin' ? {} : { instituteId };
-
-        const totalLeads = await Lead.countDocuments(query);
-        const totalInteractions = await Interaction.countDocuments(query);
+        let totalLeads = 0;
+        let totalInteractions = 0;
         const activeInstitutes = role === 'super_admin' ? await Institute.countDocuments({ status: 'active' }) : 1;
-
+        
+        if (role === 'super_admin') {
+            const institutes = await Institute.find({ status: 'active' });
+            for (let inst of institutes) {
+                const TenantLead = getTenantModel(inst.instituteId, 'Lead');
+                const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
+                totalLeads += await TenantLead.countDocuments({});
+                totalInteractions += await TenantInteraction.countDocuments({});
+            }
+        } else {
+            const TenantLead = getTenantModel(instituteId, 'Lead');
+            const TenantInteraction = getTenantModel(instituteId, 'Interaction');
+            totalLeads = await TenantLead.countDocuments({});
+            totalInteractions = await TenantInteraction.countDocuments({});
+        }
+        
         res.json({ leads: totalLeads, interactions: totalInteractions, institutes: activeInstitutes });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -164,12 +183,38 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
 // GET /api/dashboard/interactions - Returns raw interaction logs for advanced analytics UI
 app.get('/api/dashboard/interactions', authenticateToken, async (req, res) => {
     try {
-        let filter = {};
-        if (req.user.role === 'institute_admin') {
-            filter.instituteId = req.user.instituteId;
+        if (req.user.role === 'super_admin' && !req.query.instituteId) {
+            const institutes = await Institute.find({ status: 'active' });
+            let allInteractions = [];
+            for (let inst of institutes) {
+                const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
+                const interactions = await TenantInteraction.find({}).sort({ createdAt: -1 }).limit(100).lean();
+                interactions.forEach(i => i.instituteId = inst.instituteId);
+                allInteractions = allInteractions.concat(interactions);
+            }
+            allInteractions.sort((a, b) => b.createdAt - a.createdAt);
+            allInteractions = allInteractions.slice(0, 1000);
+            
+            const formattedLogs = allInteractions.map(log => {
+                const data = log.metaData || {};
+                return {
+                    s: log.sessionId,
+                    t: log.eventType || 'interaction',
+                    i: log.interactionId || 'unknown',
+                    d: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                    q: log.queryText || '',
+                    m: log.metaData || {},
+                    instituteId: log.instituteId,
+                    ...data
+                };
+            });
+            return res.json(formattedLogs);
         }
 
-        const interactions = await Interaction.find(filter)
+        let targetInstitute = req.user.role === 'super_admin' ? req.query.instituteId : req.user.instituteId;
+
+        const TenantInteraction = getTenantModel(targetInstitute, 'Interaction');
+        const interactions = await TenantInteraction.find({})
             .sort({ createdAt: -1 })
             .limit(1000)
             .lean();
@@ -184,6 +229,7 @@ app.get('/api/dashboard/interactions', authenticateToken, async (req, res) => {
                 d: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
                 q: log.queryText || '',
                 m: log.metaData || {},
+                instituteId: targetInstitute,
                 ...data
             };
         });
@@ -197,16 +243,38 @@ app.get('/api/dashboard/interactions', authenticateToken, async (req, res) => {
 
 app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
     try {
-        const { role, instituteId } = req.user;
-        const query = role === 'super_admin' ? {} : { instituteId };
+        if (req.user.role === 'super_admin' && !req.query.instituteId) {
+            const institutes = await Institute.find({ status: 'active' });
+            let allLeads = [];
+            for (let inst of institutes) {
+                const TenantLead = getTenantModel(inst.instituteId, 'Lead');
+                const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(50).lean();
+                leads.forEach(l => l.instituteId = inst.instituteId);
+                allLeads = allLeads.concat(leads);
+            }
+            allLeads.sort((a, b) => b.createdAt - a.createdAt);
+            allLeads = allLeads.slice(0, 50);
+            
+            const formattedLeads = allLeads.map(l => ({
+                sessionId: l.sessionId,
+                timestamp: l.createdAt,
+                data: l.leadData,
+                instituteId: l.instituteId
+            }));
+            return res.json(formattedLeads);
+        }
 
-        const leads = await Lead.find(query).sort({ createdAt: -1 }).limit(50).lean();
+        let targetInstitute = req.user.role === 'super_admin' ? req.query.instituteId : req.user.instituteId;
+        
+        const TenantLead = getTenantModel(targetInstitute, 'Lead');
+        const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(50).lean();
         
         // Map to match the frontend expected format
         const formattedLeads = leads.map(l => ({
             sessionId: l.sessionId,
             timestamp: l.createdAt,
-            data: l.leadData
+            data: l.leadData,
+            instituteId: targetInstitute
         }));
         
         res.json(formattedLeads);
