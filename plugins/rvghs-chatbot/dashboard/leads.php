@@ -1,14 +1,15 @@
+<?php if (!defined('ABSPATH')) exit; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leads  Command Center</title>
+<title>Leads — Command Center</title>
 <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+    const token = sessionStorage.getItem('dashboard_token');
+    if (!token) window.location.href = '?action=rvghs_chatbot_dashboard_view&tab=login';
+    const API_URL = "<?php echo esc_js(untrailingslashit(rest_url('rvghs/v1'))); ?>";
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#E31E24;--secondary:#6366f1;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#030712;--sidebar:rgba(17,24,39,0.8);--card:rgba(30,41,59,0.5);--border:rgba(255,255,255,0.08);--text:#f8fafc;--text-dim:#94a3b8;--dim:#94a3b8}
@@ -67,38 +68,31 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <aside>
     <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
     <nav class="nav-links">
-        <a class="nav-item" href="index.html">
+        <a class="nav-item" href="?action=rvghs_chatbot_dashboard_view&tab=index">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             Overview
         </a>
-        <a class="nav-item" href="interactions.html">
+        <a class="nav-item" href="?action=rvghs_chatbot_dashboard_view&tab=interactions">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             Interactions
         </a>
-        <a class="nav-item" href="sessions.html">
+        <a class="nav-item" href="?action=rvghs_chatbot_dashboard_view&tab=sessions">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             Sessions
         </a>
-        <a class="nav-item active" href="leads.html">
+        <a class="nav-item active" href="?action=rvghs_chatbot_dashboard_view&tab=leads">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Leads
         </a>
-        <a class="nav-item" href="analytics.html">
+        <a class="nav-item" href="?action=rvghs_chatbot_dashboard_view&tab=analytics">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             Analytics
         </a>
     </nav>
-    
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
-        <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
+    <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
 </aside>
 <main>
-    <h1>Lead Generation Analytics</h1>
+    <h1>ðŸ† Lead Generation Analytics</h1>
     <p class="sub">View and track all user submissions captured from the chatbot</p>
 
     <!-- Leads Generated Data Table -->
@@ -111,8 +105,8 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
                 <input type="date" id="startDate" style="padding:6px; font-size:12px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; outline:none; font-family:inherit;">
                 <span style="color:var(--dim)">to</span>
                 <input type="date" id="endDate" style="padding:6px; font-size:12px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; outline:none; font-family:inherit;">
-                <button style="padding:6px 12px; font-size:12px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="renderLeads()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--bg)'">Filter</button>
-                <button style="padding:6px 12px; font-size:12px; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); border-radius:8px; cursor:pointer; font-weight:bold;" onclick="downloadBankSummary()" onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.15)'">Download PDF</button>
+                <button style="padding:6px 12px; font-size:12px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="renderLeads()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--bg)'">ðŸ” Filter</button>
+                <button style="padding:6px 12px; font-size:12px; background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); border-radius:8px; cursor:pointer; font-weight:bold;" onclick="downloadBankSummary()" onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.15)'">ðŸ“„ Download PDF</button>
             </div>
         </div>
         <div style="overflow-x: auto;">
@@ -137,7 +131,7 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <script>
     async function fetchLeadsData() {
         try {
-            const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': 'Bearer ' + token } });
+            const res = await fetch(API_URL + '/leads-data');
             return await res.json();
         } catch (err) { return []; }
     }

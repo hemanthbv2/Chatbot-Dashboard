@@ -1,14 +1,16 @@
+﻿<?php if (!defined('ABSPATH')) exit; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analytics  Command Center</title>
+<title>Analytics — Command Center</title>
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+        const token = sessionStorage.getItem('dashboard_token');
+        if (!token) window.location.href = '?action=rvps_chatbot_dashboard_view&tab=login';
+        const API_URL = "<?php echo esc_js(untrailingslashit(rest_url('rvps/v1'))); ?>";
+        window.cachedLogs = [];
+    </script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -81,23 +83,16 @@ tr:last-child td { border-bottom:none; }
 <aside>
 <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
 <nav>
-<a class="ni" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
-<a class="ni" href="interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
-<a class="ni" href="sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
-<a class="ni" href="leads.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
-<a class="ni active" href="analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
+<a class="ni" href="?action=rvps_chatbot_dashboard_view&tab=index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+<a class="ni" href="?action=rvps_chatbot_dashboard_view&tab=interactions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
+<a class="ni" href="?action=rvps_chatbot_dashboard_view&tab=sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
+<a class="ni" href="?action=rvps_chatbot_dashboard_view&tab=leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
+<a class="ni active" href="?action=rvps_chatbot_dashboard_view&tab=analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
 </nav>
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
-        <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
+<div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
 </aside>
 <main>
-<h1>Keyword Analytics</h1>
+<h1>ðŸ“Š Keyword Analytics</h1>
 <p class="sub">Filter, search, and export deep metrics on specific keywords</p>
 
 <div class="toolbar">
@@ -123,8 +118,8 @@ tr:last-child td { border-bottom:none; }
     </div>
 
     <div class="export-btns">
-        <button class="e-btn pdf" onclick="exportPDF()">Export PDF</button>
-        <button class="e-btn excel" onclick="exportExcel()">Export Excel</button>
+        <button class="e-btn pdf" onclick="exportPDF()">ðŸ“„ Export PDF</button>
+        <button class="e-btn excel" onclick="exportExcel()">ðŸ“Š Export Excel</button>
     </div>
 </div>
 
@@ -167,7 +162,7 @@ tr:last-child td { border-bottom:none; }
         
         <!-- Preceding -->
         <div class="card" style="flex:1;">
-            <h3> Entry Points (Before)</h3>
+            <h3>ðŸ”™ Entry Points (Before)</h3>
             <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users did right BEFORE asking about this</div>
             <div style="height:150px; overflow-y:auto; padding-right:8px;" id="precedingList"></div>
         </div>
@@ -179,7 +174,7 @@ tr:last-child td { border-bottom:none; }
 
         <!-- Subsequent -->
         <div class="card" style="flex:1; border-color:var(--secondary);">
-            <h3 style="color:var(--secondary);"> Next Steps (After)</h3>
+            <h3 style="color:var(--secondary);">â­ï¸ Next Steps (After)</h3>
             <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users clicked or asked right AFTER this</div>
             <div style="height:150px; overflow-y:auto; padding-right:8px;" id="subsequentList"></div>
         </div>
@@ -360,10 +355,10 @@ function analyzeKeyword(kw) {
             const time = new Date(l.d).toLocaleString();
             let highlightQ = (l.q||'').replace(new RegExp(`(${kw})`, 'gi'), '<span style="background:rgba(227, 30, 36, 0.3);padding:0 2px;border-radius:3px">$1</span>');
             return `<div class="evt">
-                <div class="ic"></div>
+                <div class="ic">💬</div>
                 <div class="info">
                     <div class="q">${highlightQ}</div>
-                    <div class="meta">Session: ${(l.s||'').split('_')[1]||l.s} - ${time} - Intent: ${l.i||'N/A'}</div>
+                    <div class="meta">Session: ${(l.s||'').split('_')[1]||l.s} Â· ${time} Â· Intent: ${l.i||'N/A'}</div>
                 </div>
             </div>`;
         }).join('');
@@ -397,7 +392,7 @@ function exportPDF() {
         headStyles: { fillColor: [227, 30, 36] }
     });
 
-    doc.save(`RVCN_Analytics_${currentKeyword}.pdf`);
+    doc.save(`RVPS_Analytics_${currentKeyword}.pdf`);
 }
 
 function exportExcel() {
@@ -415,16 +410,16 @@ function exportExcel() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Analytics");
     
-    XLSX.writeFile(wb, `RVCN_Analytics_${currentKeyword}.xlsx`);
+    XLSX.writeFile(wb, `RVPS_Analytics_${currentKeyword}.xlsx`);
 }
 
 // Ensure local storage has some data if testing locally
 window.onload = async () => {
     try {
-        const res = await fetch('/api/dashboard/interactions', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        const res = await fetch(API_URL + '/analytics-data', {
+            headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token') }
         });
-        if (res.status === 401 || res.status === 403) window.location.href = '/'; else window.cachedLogs = await res.json();
+        if (res.status === 401 || res.status === 403) window.location.href = '?action=rvps_chatbot_dashboard_view&tab=login'; else window.cachedLogs = await res.json();
     } catch (e) { console.error(e); }
 
     if (window.cachedLogs.length === 0) {

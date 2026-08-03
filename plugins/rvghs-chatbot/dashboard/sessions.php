@@ -1,14 +1,16 @@
+﻿<?php if (!defined('ABSPATH')) exit; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sessions  Command Center</title>
+<title>Sessions — Command Center</title>
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+        const token = sessionStorage.getItem('dashboard_token');
+        if (!token) window.location.href = '?action=rvghs_chatbot_dashboard_view&tab=login';
+        const API_URL = "<?php echo esc_js(untrailingslashit(rest_url('rvghs/v1'))); ?>";
+        window.cachedLogs = [];
+    </script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#E31E24;--secondary:#6366f1;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#030712;--sidebar:rgba(17,24,39,0.8);--card:rgba(30,41,59,0.5);--border:rgba(255,255,255,0.08);--text:#f8fafc;--dim:#94a3b8}
@@ -80,35 +82,28 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <aside>
 <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
 <nav>
-<a class="ni" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
-<a class="ni" href="interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
-<a class="ni active" href="sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
-<a class="ni" href="leads.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
-<a class="ni" href="analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=interactions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
+<a class="ni active" href="?action=rvghs_chatbot_dashboard_view&tab=sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
 </nav>
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
-        <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
+<div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
 </aside>
 <main>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-    <h1>Session Explorer</h1>
+    <h1>ðŸ‘¥ Session Explorer</h1>
     <div style="display:flex; gap:8px;">
         <input type="text" id="sessionSearch" placeholder="Search sessions..." onkeyup="render()" style="padding:6px 12px; font-size:12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; outline:none; min-width: 200px;">
-        <button style="padding:6px 12px; font-size:12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="downloadPDF()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--card)'">PDF</button>
-        <button style="padding:6px 12px; font-size:12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="render()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--card)'">Refresh</button>
+        <button style="padding:6px 12px; font-size:12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="downloadPDF()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--card)'">ðŸ“„ PDF</button>
+        <button style="padding:6px 12px; font-size:12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; cursor:pointer;" onclick="render()" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='var(--card)'">🔄 Refresh</button>
     </div>
 </div>
 <p class="sub" style="margin-bottom:30px; margin-top:0;">Click any session to replay the user's complete journey step by step</p>
 <div class="sessions-list" id="sessionsList"><div class="empty">No sessions recorded yet</div></div>
 </main>
 <script>
-const IC={message:'',click:'',ui:'',hover:'',copy:'',typing:'',scroll:'',dwell:'',focus:'',blur:'',visibility:'',session:''};
+const IC={message:'💬',click:'ðŸ–±ï¸',ui:'âš™ï¸',hover:'👆',copy:'📋',typing:'âŒ¨ï¸',scroll:'📜',dwell:'â±ï¸',focus:'🎯',blur:'💤',visibility:'ðŸ‘ï¸',session:'🔌'};
 
 
 function downloadPDF() {
@@ -142,10 +137,10 @@ function getLogs(){ return window.cachedLogs || []; }
 
 async function refreshData() {
     try {
-        const res = await fetch('/api/dashboard/interactions', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        const res = await fetch(API_URL + '/sessions-data', {
+            headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token') }
         });
-        if (res.status === 401 || res.status === 403) window.location.href = '/'; else window.cachedLogs = await res.json();
+        if (res.status === 401 || res.status === 403) window.location.href = '?action=rvghs_chatbot_dashboard_view&tab=login'; else window.cachedLogs = await res.json();
     } catch (e) { console.error(e); }
     render();
 }
@@ -208,14 +203,14 @@ el.innerHTML=sortedDays.map(dayKey => {
         const hovers=evts.filter(e=>e.i&&e.i.startsWith('hover:')).length;
         const copies=evts.filter(e=>e.i&&e.i.startsWith('copy:')).length;
         const dwellEvt=evts.find(e=>e.i&&e.i.startsWith('dwell:'));
-        const dwell=dwellEvt&&dwellEvt.m?dwellEvt.m.seconds+'s':'';
+        const dwell=dwellEvt&&dwellEvt.m?dwellEvt.m.seconds+'s':'—';
         const timeStr=new Date(evts[0].d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         
-        let timeline = `<div class="t-step" style="border-left: 2px solid var(--success);"><div class="ic" style="background:rgba(16,185,129,0.2);color:#10b981;"></div><div class="tx" style="color:#10b981;">Session Started</div><div class="tm">${new Date(evts[0].d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div></div>`;
+        let timeline = `<div class="t-step" style="border-left: 2px solid var(--success);"><div class="ic" style="background:rgba(16,185,129,0.2);color:#10b981;">ðŸŸ¢</div><div class="tx" style="color:#10b981;">Session Started</div><div class="tm">${new Date(evts[0].d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div></div>`;
         
         timeline += evts.map(e=>{
             const t=e.i?e.i.split(':')[0]:'unknown';
-            const icon=IC[t]||IC[e.t]||'';
+            const icon=IC[t]||IC[e.t]||'âš¡';
             const tm=new Date(e.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
             return `<div class="t-step"><div class="ic">${icon}</div><div class="tx">${e.q}</div><div class="tm">${tm}</div></div>`;
         }).join('');
@@ -224,22 +219,22 @@ el.innerHTML=sortedDays.map(dayKey => {
         let dropIntent = lastEvt.i || 'Unknown';
         if(dropIntent.startsWith('click:')) dropIntent = dropIntent.split(':')[1];
         
-        timeline += `<div class="t-step" style="border-left: 2px solid var(--danger); margin-top:8px;"><div class="ic" style="background:rgba(239,68,68,0.2);color:#ef4444;"></div><div class="tx" style="color:#ef4444;">User Dropped Off <span style="font-size:10px; opacity:0.7;">(Last intent: ${dropIntent})</span></div><div class="tm">${new Date(lastEvt.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div></div>`;
+        timeline += `<div class="t-step" style="border-left: 2px solid var(--danger); margin-top:8px;"><div class="ic" style="background:rgba(239,68,68,0.2);color:#ef4444;">ðŸ”´</div><div class="tx" style="color:#ef4444;">User Dropped Off <span style="font-size:10px; opacity:0.7;">(Last intent: ${dropIntent})</span></div><div class="tm">${new Date(lastEvt.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div></div>`;
         
         return `<div class="s-card" onclick="event.stopPropagation(); this.classList.toggle('expanded')">
         <div class="s-head">
-            <div class="s-id"> Session ${sid.split('_')[1]||sid}</div>
+            <div class="s-id">ðŸ”— Session ${sid.split('_')[1]||sid}</div>
             <div style="display:flex; align-items:center; gap:12px;">
-                <div class="s-time">${timeStr} - ${evts.length} events</div>
-                <button style="padding:4px 8px; font-size:11px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer;" onclick="downloadSessionPDF(event, this)">Export PDF</button>
+                <div class="s-time">${timeStr} Â· ${evts.length} events</div>
+                <button style="padding:4px 8px; font-size:11px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer;" onclick="downloadSessionPDF(event, this)">ðŸ“„ Export PDF</button>
             </div>
         </div>
         <div class="s-stats">
-        <span class="s-stat msg"> ${msgs} msgs</span>
-        <span class="s-stat clk"> ${clicks} clicks</span>
-        <span class="s-stat hov"> ${hovers} hovers</span>
-        <span class="s-stat cpy"> ${copies} copies</span>
-        <span class="s-stat dw"> ${dwell}</span>
+        <span class="s-stat msg">💬 ${msgs} msgs</span>
+        <span class="s-stat clk">ðŸ–±ï¸ ${clicks} clicks</span>
+        <span class="s-stat hov">👆 ${hovers} hovers</span>
+        <span class="s-stat cpy">📋 ${copies} copies</span>
+        <span class="s-stat dw">â±ï¸ ${dwell}</span>
         </div>
         <div class="s-timeline">${timeline}</div>
         </div>`;
@@ -249,7 +244,7 @@ el.innerHTML=sortedDays.map(dayKey => {
     
     return `<div class="day-group ${isFirst ? 'expanded' : ''}">
         <div class="day-header" onclick="this.parentElement.classList.toggle('expanded')">
-            <div class="day-title"> ${dayData.displayDate}</div>
+            <div class="day-title">ðŸ“… ${dayData.displayDate}</div>
             <div class="day-count">${sids.length} Sessions</div>
         </div>
         <div class="day-sessions">${sessionsHtml}</div>

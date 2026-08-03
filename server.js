@@ -288,7 +288,9 @@ app.post('/api/setup', async (req, res) => {
     try {
         const institutes = [
             { id: 'rvcn', name: 'RV College of Nursing', key: 'rvcn_key_12345' },
-            { id: 'rvce', name: 'RV College of Engineering', key: 'rvce_key_12345' }
+            { id: 'rvce', name: 'RV College of Engineering', key: 'rvce_key_12345' },
+            { id: 'rvps', name: 'RV Public School', key: 'rvps_key_12345' },
+            { id: 'rvghs', name: 'RV Girls High School', key: 'rvghs_key_12345' }
         ];
 
         // Create Institutes

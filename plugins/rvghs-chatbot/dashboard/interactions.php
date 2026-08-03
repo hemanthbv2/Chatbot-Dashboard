@@ -1,14 +1,16 @@
+﻿<?php if (!defined('ABSPATH')) exit; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactions  Command Center</title>
+<title>Interactions — Command Center</title>
 <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+        const token = sessionStorage.getItem('dashboard_token');
+        if (!token) window.location.href = '?action=rvghs_chatbot_dashboard_view&tab=login';
+        const API_URL = "<?php echo esc_js(untrailingslashit(rest_url('rvghs/v1'))); ?>";
+    window.cachedLogs = [];
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -86,23 +88,16 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <aside>
 <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
 <nav>
-<a class="ni" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
-<a class="ni active" href="interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
-<a class="ni" href="sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
-<a class="ni" href="leads.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
-<a class="ni" href="analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+<a class="ni active" href="?action=rvghs_chatbot_dashboard_view&tab=interactions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
+<a class="ni" href="?action=rvghs_chatbot_dashboard_view&tab=analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
 </nav>
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
-        <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
+<div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
 </aside>
 <main>
-<h1>Interaction Deep Dive</h1>
+<h1>ðŸ” Interaction Deep Dive</h1>
 <p class="sub">Click any keyword below to see every related search, click, hover and copy</p>
 
 <!-- Search & Quick Filters -->
@@ -120,14 +115,14 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <div class="card" id="searchResultPanel" style="display:none; margin-bottom:24px;">
     <div class="drill-header" style="margin-bottom:15px;">
         <h2>Global Search Results</h2>
-        <button class="close-btn" onclick="closeSearch()"> Clear Search</button>
+        <button class="close-btn" onclick="closeSearch()">✕ Clear Search</button>
     </div>
     <div class="evt-list" id="searchEvents"></div>
 </div>
 
 <!-- Keyword Chips -->
 <div class="card" style="margin-bottom:24px">
-<h3> Detected User Interest Keywords</h3>
+<h3>🎯 Detected User Interest Keywords</h3>
 <div class="chips" id="topicChips"><div class="empty">No data yet</div></div>
 </div>
 
@@ -137,7 +132,7 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
     <div class="drill-header">
         <span class="emoji" id="drillEmoji"></span>
         <h2 id="drillTitle"></h2>
-        <button class="close-btn" onclick="closeDrill()"> Back to all keywords</button>
+        <button class="close-btn" onclick="closeDrill()">✕ Back to all keywords</button>
     </div>
     <div class="drill-stats" id="drillStats"></div>
     <h3 style="margin-bottom:12px">All related events</h3>
@@ -149,21 +144,21 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <div id="defaultView">
 <div class="grid">
 <div class="card span2">
-<h3> Topic Ranking</h3>
+<h3>ðŸ† Topic Ranking</h3>
 <div id="topicRanking"><div class="empty">No data</div></div>
 </div>
 <div class="card">
-<h3> Interest Distribution</h3>
+<h3>ðŸ“Š Interest Distribution</h3>
 <div style="height:280px"><canvas id="topicChart"></canvas></div>
 </div>
 </div>
 <div class="grid">
 <div class="card span2">
-<h3> Component Analytics (Clarity Mode)</h3>
+<h3>ðŸ”¥ Component Analytics (Clarity Mode)</h3>
 <div id="clickRanking"><div class="empty">No click data</div></div>
 </div>
 <div class="card">
-<h3> Copied Content</h3>
+<h3>📋 Copied Content</h3>
 <div id="copyList"><div class="empty">No copies</div></div>
 </div>
 </div>
@@ -226,11 +221,11 @@ function handleGlobalSearch() {
     
     el.innerHTML = filtered.reverse().map(l=>{
         const evtType = l.i ? l.i.split(':')[0] : 'unknown';
-        const icon = IC[evtType]||IC[l.t]||'';
+        const icon = IC[evtType]||IC[l.t]||'âš¡';
         const time = new Date(l.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
         const date = new Date(l.d).toLocaleDateString();
-        let meta = `Session ${(l.s||'').split('_')[1]||'?'} - ${date} ${time}`;
-        if(l.m && Object.keys(l.m).length) meta += ' - '+Object.entries(l.m).map(([k,v])=>`${k}: ${v}`).join(' - ');
+        let meta = `Session ${(l.s||'').split('_')[1]||'?'} Â· ${date} ${time}`;
+        if(l.m && Object.keys(l.m).length) meta += ' Â· '+Object.entries(l.m).map(([k,v])=>`${k}: ${v}`).join(' Â· ');
         return `<div class="evt ${evtType}"><div class="ic">${icon}</div><div class="info"><div class="q">${l.q}</div><div class="meta">${meta}</div></div></div>`;
     }).join('');
 }
@@ -250,18 +245,18 @@ function closeSearch() {
 }
 
 const TOPICS = {
-    placements:{emoji:'',color:'#6366f1',kw:['placement','placements','package','lpa','salary','recruit','job','offer','placed','company','companies','highest']},
-    admissions:{emoji:'',color:'#10b981',kw:['admission','admissions','apply','kcet','comedk','comed-k','cutoff','eligibility','fee','seat','quota','management']},
-    hostels:{emoji:'',color:'#f59e0b',kw:['hostel','hostels','mess','food court','room','warden','boys hostel','girls hostel','hostel fee']},
-    departments:{emoji:'',color:'#a78bfa',kw:['department','cse','ece','mech','civil','ise','eee','aiml','branch','course','program']},
-    campus:{emoji:'',color:'#34d399',kw:['campus','club','fest','sports','library','wifi','canteen','life','ncc','nss','cultural']},
-    faculty:{emoji:'',color:'#38bdf8',kw:['faculty','professor','hod','teacher','dean','principal','staff','fac_']},
-    rankings:{emoji:'',color:'#fbbf24',kw:['ranking','nirf','naac','autonomous','accreditation','rating']},
-    innovation:{emoji:'',color:'#f472b6',kw:['team','ashwa','antariksh','vyoma','chimera','astra','innovation','robot','drone','satellite']},
-    research:{emoji:'',color:'#ec4899',kw:['research','coe','centre of excellence','center of excellence','phd','boston','cocs','patent']},
-    contact:{emoji:'',color:'#fb923c',kw:['contact','phone','email','address','location','map','reach','transport']},
+    placements:{emoji:'ðŸ’¼',color:'#6366f1',kw:['placement','placements','package','lpa','salary','recruit','job','offer','placed','company','companies','highest']},
+    admissions:{emoji:'ðŸŽ“',color:'#10b981',kw:['admission','admissions','apply','kcet','comedk','comed-k','cutoff','eligibility','fee','seat','quota','management']},
+    hostels:{emoji:'ðŸ ',color:'#f59e0b',kw:['hostel','hostels','mess','food court','room','warden','boys hostel','girls hostel','hostel fee']},
+    departments:{emoji:'ðŸ“š',color:'#a78bfa',kw:['department','cse','ece','mech','civil','ise','eee','aiml','branch','course','program']},
+    campus:{emoji:'ðŸ•ï¸',color:'#34d399',kw:['campus','club','fest','sports','library','wifi','canteen','life','ncc','nss','cultural']},
+    faculty:{emoji:'ðŸ‘¨â€ðŸ«',color:'#38bdf8',kw:['faculty','professor','hod','teacher','dean','principal','staff','fac_']},
+    rankings:{emoji:'ðŸ†',color:'#fbbf24',kw:['ranking','nirf','naac','autonomous','accreditation','rating']},
+    innovation:{emoji:'ðŸš€',color:'#f472b6',kw:['team','ashwa','antariksh','vyoma','chimera','astra','innovation','robot','drone','satellite']},
+    research:{emoji:'ðŸ”¬',color:'#ec4899',kw:['research','coe','centre of excellence','center of excellence','phd','boston','cocs','patent']},
+    contact:{emoji:'ðŸ“ž',color:'#fb923c',kw:['contact','phone','email','address','location','map','reach','transport']},
 };
-const IC = {message:'',click:'',ui:'',hover:'',copy:'',typing:'',scroll:'',dwell:'',focus:'',blur:'',visibility:'',session:''};
+const IC = {message:'💬',click:'ðŸ–±ï¸',ui:'âš™ï¸',hover:'👆',copy:'📋',typing:'âŒ¨ï¸',scroll:'📜',dwell:'â±ï¸',focus:'🎯',blur:'💤',visibility:'ðŸ‘ï¸',session:'🔌'};
 
 function getLogs(){ return window.cachedLogs || []; }
 
@@ -277,10 +272,10 @@ function classify(l){
 
 window.onload = async () => {
     try {
-        const res = await fetch('/api/dashboard/interactions', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        const res = await fetch(API_URL + '/interactions-data', {
+            headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token') }
         });
-        if (res.status === 401 || res.status === 403) window.location.href = '/'; else window.cachedLogs = await res.json();
+        if (res.status === 401 || res.status === 403) window.location.href = '?action=rvghs_chatbot_dashboard_view&tab=login'; else window.cachedLogs = await res.json();
     } catch (e) { console.error(e); }
     render();
 };
@@ -320,17 +315,17 @@ function openDrill(topic){
     document.getElementById('defaultView').style.display='none';
     document.getElementById('drillPanel').classList.add('open');
     document.getElementById('drillEmoji').textContent = cfg.emoji;
-    document.getElementById('drillTitle').textContent = topic.charAt(0).toUpperCase()+topic.slice(1)+'  '+related.length+' events';
+    document.getElementById('drillTitle').textContent = topic.charAt(0).toUpperCase()+topic.slice(1)+' — '+related.length+' events';
 
     const msgs = related.filter(l=>l.t==='message');
     const clicks = related.filter(l=>l.i&&l.i.startsWith('click:'));
     const hovers = related.filter(l=>l.i&&l.i.startsWith('hover:'));
     const copies = related.filter(l=>l.i&&l.i.startsWith('copy:'));
     document.getElementById('drillStats').innerHTML = `
-        <span class="d-stat s1"> ${msgs.length} searches</span>
-        <span class="d-stat s2"> ${clicks.length} clicks</span>
-        <span class="d-stat s4"> ${hovers.length} hovers</span>
-        <span class="d-stat s3"> ${copies.length} copies</span>
+        <span class="d-stat s1">💬 ${msgs.length} searches</span>
+        <span class="d-stat s2">ðŸ–±ï¸ ${clicks.length} clicks</span>
+        <span class="d-stat s4">👆 ${hovers.length} hovers</span>
+        <span class="d-stat s3">📋 ${copies.length} copies</span>
     `;
 
     renderChips(logs);
@@ -389,11 +384,11 @@ function openDrill(topic){
     const el = document.getElementById('drillEvents');
     el.innerHTML = extraHtml + related.reverse().map(l=>{
         const evtType = l.i ? l.i.split(':')[0] : 'unknown';
-        const icon = IC[evtType]||IC[l.t]||'';
+        const icon = IC[evtType]||IC[l.t]||'âš¡';
         const time = new Date(l.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
         const date = new Date(l.d).toLocaleDateString();
-        let meta = `Session ${(l.s||'').split('_')[1]||'?'} - ${date} ${time}`;
-        if(l.m && Object.keys(l.m).length) meta += ' - '+Object.entries(l.m).map(([k,v])=>`${k}: ${v}`).join(' - ');
+        let meta = `Session ${(l.s||'').split('_')[1]||'?'} Â· ${date} ${time}`;
+        if(l.m && Object.keys(l.m).length) meta += ' Â· '+Object.entries(l.m).map(([k,v])=>`${k}: ${v}`).join(' Â· ');
         return `<div class="evt ${evtType}"><div class="ic">${icon}</div><div class="info"><div class="q">${l.q}</div><div class="meta">${meta}</div></div></div>`;
     }).join('');
 }
@@ -502,7 +497,7 @@ function renderClicks(logs){
         return `<div class="rk" style="flex-wrap:wrap; align-items:flex-start; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
             <div style="display:flex; width:100%; align-items:center; gap:12px; margin-bottom:8px;">
                 <div class="rk-n">${i+1}</div>
-                <span></span>
+                <span>ðŸ–±ï¸</span>
                 <div class="rk-label" style="font-size:13px">${label}</div>
                 <div class="rk-cnt" style="font-size:14px; font-weight:800; color:var(--text); width:auto;">${data.clicks} <span style="font-size:10px; color:var(--dim); font-weight:500;">clicks</span></div>
             </div>
@@ -510,8 +505,8 @@ function renderClicks(logs){
                 <div class="rk-bar" style="flex-grow:1; width:auto; height:8px;"><div style="width:${pct}%;background:linear-gradient(90deg, var(--secondary), var(--success)); border-radius:4px;"></div></div>
             </div>
             <div style="width:100%; display:flex; justify-content:space-between; padding-left:38px; margin-top:10px; font-size:11px; color:var(--dim);">
-                <span style="background:rgba(99,102,241,0.1); color:#818cf8; padding:6px 10px; border-radius:6px; font-weight:600;"> ${data.users.size} unique visitors</span>
-                <span style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:6px; font-weight:600;"> ${dwellText} time spent</span>
+                <span style="background:rgba(99,102,241,0.1); color:#818cf8; padding:6px 10px; border-radius:6px; font-weight:600;">ðŸ‘¥ ${data.users.size} unique visitors</span>
+                <span style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:6px; font-weight:600;">â±ï¸ ${dwellText} time spent</span>
             </div>
         </div>`;
     }).join('');
@@ -524,7 +519,7 @@ function renderCopies(logs){
     el.innerHTML = copies.map(c=>{
         const text = c.i.replace('copy:','').trim();
         const time = new Date(c.d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-        return `<div class="rk"><span></span><div class="rk-label" style="font-size:11px">"${text}"</div><div class="rk-cnt">${time}</div></div>`;
+        return `<div class="rk"><span>📋</span><div class="rk-label" style="font-size:11px">"${text}"</div><div class="rk-cnt">${time}</div></div>`;
     }).join('');
 }
 

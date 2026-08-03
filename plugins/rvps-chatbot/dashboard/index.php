@@ -1,14 +1,15 @@
+<?php if (!defined('ABSPATH')) exit; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RVCN Chatbot  Command Center</title>
+    <title>RVPS Chatbot — Command Center</title>
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+        const token = sessionStorage.getItem('dashboard_token');
+        if (!token) window.location.href = '?action=rvps_chatbot_dashboard_view&tab=login';
+        const API_URL = "<?php echo esc_js(untrailingslashit(rest_url('rvps/v1'))); ?>";
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -213,35 +214,28 @@
         </div>
 
         <nav class="nav-links">
-            <a class="nav-item active" href="index.html" style="text-decoration:none">
+            <a class="nav-item active" href="?action=rvps_chatbot_dashboard_view&tab=index" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 Overview
             </a>
-            <a class="nav-item" href="interactions.html" style="text-decoration:none">
+            <a class="nav-item" href="?action=rvps_chatbot_dashboard_view&tab=interactions" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 Interactions
             </a>
-            <a class="nav-item" href="sessions.html" style="text-decoration:none">
+            <a class="nav-item" href="?action=rvps_chatbot_dashboard_view&tab=sessions" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Sessions
             </a>
-            <a class="nav-item" href="leads.html" style="text-decoration:none">
+            <a class="nav-item" href="?action=rvps_chatbot_dashboard_view&tab=leads" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 Leads
             </a>
-            <a class="nav-item" href="analytics.html" style="text-decoration:none">
+            <a class="nav-item" href="?action=rvps_chatbot_dashboard_view&tab=analytics" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 Analytics
             </a>
         </nav>
 
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
         <div class="sidebar-footer">
             <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim);">
                 <div class="pulse"></div>
@@ -258,12 +252,12 @@
             </div>
             <div class="actions">
                 <div class="btn">
-                     <input type="date" id="dateFilter" onchange="render()">
+                    ðŸ“… <input type="date" id="dateFilter" onchange="render()">
                 </div>
-                <button class="btn" onclick="render()">Sync</button>
-                <button class="btn" style="color: var(--success); border-color: rgba(16,185,129,0.2);" onclick="exportCSV()">Export Excel</button>
-                <button class="btn btn-primary" onclick="generateTestData()">Mock Data</button>
-                <button class="btn" style="color: var(--danger); border-color: rgba(239,68,68,0.2);" onclick="clearAllData()">Reset</button>
+                <button class="btn" onclick="render()">🔄 Sync</button>
+                <button class="btn" style="color: var(--success); border-color: rgba(16,185,129,0.2);" onclick="exportCSV()">ðŸ“¥ Export Excel</button>
+                <button class="btn btn-primary" onclick="generateTestData()">ðŸ§ª Mock Data</button>
+                <button class="btn" style="color: var(--danger); border-color: rgba(239,68,68,0.2);" onclick="clearAllData()">ðŸ—‘ï¸ Reset</button>
             </div>
         </header>
 
@@ -272,7 +266,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Total Events</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">📈</div>
                 </div>
                 <div class="stat-val" id="totalEvents">0</div>
                 <div class="stat-trend trend-up">+0.0% <small>since last session</small></div>
@@ -281,7 +275,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Active Users</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">ðŸ‘¥</div>
                 </div>
                 <div class="stat-val" id="activeUsers">1</div>
                 <div class="stat-trend">Live connections</div>
@@ -290,7 +284,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Click Rate</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">ðŸ–±ï¸</div>
                 </div>
                 <div class="stat-val" id="clickRate">0%</div>
                 <div class="stat-trend trend-up">Interactivity index</div>
@@ -299,7 +293,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Success Score</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">âœ¨</div>
                 </div>
                 <div class="stat-val" id="successScore">0%</div>
                 <div class="stat-trend">Intent accuracy</div>
@@ -308,7 +302,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Time to Resolution</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">âš¡</div>
                 </div>
                 <div class="stat-val" id="avgTTR">0s</div>
                 <div class="stat-trend">Avg time to action</div>
@@ -317,7 +311,7 @@
             <div class="card" style="border-color: var(--secondary);">
                 <div class="card-header">
                     <h3 style="color: var(--secondary);">Leads Generated</h3>
-                    <div class="card-icon" style="background: rgba(79, 70, 229, 0.1);"></div>
+                    <div class="card-icon" style="background: rgba(79, 70, 229, 0.1);">ðŸ†</div>
                 </div>
                 <div class="stat-val" id="leadsGenerated" style="color: var(--secondary);">0</div>
                 <div class="stat-trend trend-up">Total Submissions</div>
@@ -327,7 +321,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Typos Auto-Fixed</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">âœï¸</div>
                 </div>
                 <div class="stat-val" id="typosFixed">0</div>
                 <div class="stat-trend">Fuzzy matches</div>
@@ -336,7 +330,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Ghost Rate</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">👻</div>
                 </div>
                 <div class="stat-val" id="ghostRate">0%</div>
                 <div class="stat-trend">Zero interaction</div>
@@ -345,7 +339,7 @@
             <div class="card" style="border-color: rgba(239,68,68,0.3);">
                 <div class="card-header">
                     <h3 style="color:var(--danger);">Frustration Index</h3>
-                    <div class="card-icon" style="background:rgba(239,68,68,0.1);"></div>
+                    <div class="card-icon" style="background:rgba(239,68,68,0.1);">😡</div>
                 </div>
                 <div class="stat-val" id="frustrationIndex" style="color:var(--danger);">0%</div>
                 <div class="stat-trend trend-down">Negative experiences</div>
@@ -382,7 +376,7 @@
             <!-- Deep Analytics Lists -->
             <div class="card chart-card">
                 <div class="card-header">
-                    <h3> Top Exit Points</h3>
+                    <h3>ðŸšª Top Exit Points</h3>
                 </div>
                 <div class="uq-list" id="exitList">
                     <div class="empty-state">No drop-offs detected</div>
@@ -391,7 +385,7 @@
 
             <div class="card chart-card">
                 <div class="card-header">
-                    <h3> Frequently Combined</h3>
+                    <h3>ðŸ”— Frequently Combined</h3>
                 </div>
                 <div class="uq-list" id="combinationList">
                     <div class="empty-state">No multi-intents detected</div>
@@ -400,7 +394,7 @@
             
             <div class="card chart-card">
                 <div class="card-header">
-                    <h3> Typos & Slang Fixed</h3>
+                    <h3>âœï¸ Typos & Slang Fixed</h3>
                 </div>
                 <div class="uq-list" id="typoList">
                     <div class="empty-state">No typos corrected</div>
@@ -411,18 +405,18 @@
             <div class="card chart-card">
                 <div class="card-header">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <h3> Unanswered Questions</h3>
+                        <h3>â“ Unanswered Questions</h3>
                         <div class="card-icon" style="font-size:11px;color:var(--danger)" id="uqCount">0</div>
                     </div>
                 </div>
                 <div class="uq-list" id="unansweredList">
-                    <div class="empty-state">No unanswered questions  great! </div>
+                    <div class="empty-state">No unanswered questions — great! ðŸŽ‰</div>
                 </div>
             </div>
 
             <div class="card chart-card">
                 <div class="card-header">
-                    <h3> Moderated Queries</h3>
+                    <h3>ðŸ›¡ï¸ Moderated Queries</h3>
                     <div class="card-icon" style="font-size:11px;color:var(--warning)" id="modCount">0</div>
                 </div>
                 <div class="uq-list" id="moderatedList">
@@ -432,38 +426,37 @@
 
         </div>
     </main>
-
     <script>
         let mainChart = null;
         let flowChart = null;
         let selectedSession = null;
 
         const ICONS = {
-            'message': '',
-            'click': '',
-            'ui': '',
-            'interaction': '',
-            'moderated': '',
-            'hover': '',
-            'copy': '',
-            'typing': '',
-            'scroll': '',
-            'dwell': '',
-            'focus': '',
-            'blur': '',
-            'visibility': '',
-            'session': ''
+            'message': '💬',
+            'click': '🖱️',
+            'ui': '⚙️',
+            'interaction': '🖱️',
+            'moderated': '🛡️',
+            'hover': '👆',
+            'copy': '📋',
+            'typing': '⌨️',
+            'scroll': '📜',
+            'dwell': '⏱️',
+            'focus': '🎯',
+            'blur': '💤',
+            'visibility': '👁️',
+            'session': '🔌'
         };
 
         let logsCache = [];
 
         async function fetchLogs() {
             try {
-                const res = await fetch('/api/dashboard/interactions', {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                const res = await fetch(API_URL + '/overview-data', {
+                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token') }
                 });
                 if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/';
+                    window.location.href = '?action=rvps_chatbot_dashboard_view&tab=login';
                 }
                 return await res.json();
             } catch(e) { return []; }
@@ -471,7 +464,7 @@
 
         async function fetchLeadsData() {
             try {
-                const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': 'Bearer ' + token } });
+                const res = await fetch(API_URL + '/leads-data');
                 return await res.json();
             } catch (err) { return []; }
         }
@@ -674,14 +667,14 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Chatbot Logs");
             
-            XLSX.writeFile(wb, `RVCN_chatbot_logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(wb, `RVPS_chatbot_logs_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
         async function clearAllData() {
             if (confirm("Reset all intelligence data?")) {
                 await fetch(API_URL + '/logs', {
                     method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token') }
                 });
                 render();
             }
@@ -694,18 +687,18 @@
             const mock = [
                 // User journey simulation
                 { s: sid, q: "Hi", i: "greet", d: ts(120000), t: 'message' },
-                { s: sid, q: "[click] Button:  Placements", i: "click:Button:  Placements", d: ts(108000), t: 'interaction', m: { action: 'placements', element: 'act-btn' } },
+                { s: sid, q: "[click] Button: ðŸ’¼ Placements", i: "click:Button: ðŸ’¼ Placements", d: ts(108000), t: 'interaction', m: { action: 'placements', element: 'act-btn' } },
                 { s: sid, q: "CSE placements", i: "placements", d: ts(100000), t: 'message' },
                 { s: sid, q: "[hover] View Placement Stats", i: "hover:View Placement Stats", d: ts(95000), t: 'interaction', m: { duration: '500ms+' } },
-                { s: sid, q: "[copy] 67 LPA Highest Package", i: "copy:67 LPA Highest Package", d: ts(75000), t: 'interaction', m: { length: 24 } },
-                { s: sid, q: "[click] Button:  Admissions", i: "click:Button:  Admissions", d: ts(65000), t: 'interaction', m: { action: 'admissions', element: 'act-btn' } },
+                { s: sid, q: "[copy] â‚¹67 LPA Highest Package", i: "copy:â‚¹67 LPA Highest Package", d: ts(75000), t: 'interaction', m: { length: 24 } },
+                { s: sid, q: "[click] Button: ðŸŽ“ Admissions", i: "click:Button: ðŸŽ“ Admissions", d: ts(65000), t: 'interaction', m: { action: 'admissions', element: 'act-btn' } },
                 { s: sid, q: "how to apply?", i: "admissions", d: ts(60000), t: 'message' },
                 { s: sid, q: "[copy] KCET, COMED-K, Management Quota", i: "copy:KCET, COMED-K, Management Quota", d: ts(55000), t: 'interaction', m: { length: 34 } },
                 { s: sid, q: "hostel fees", i: "hostels", d: ts(45000), t: 'message' },
                 { s: sid, q: "tell me about cse department", i: "dept_cse", d: ts(40000), t: 'message' },
-                { s: sid, q: "[click] Button:  Campus Life", i: "click:Button:  Campus Life", d: ts(35000), t: 'interaction', m: { action: 'campusLife', element: 'act-btn' } },
+                { s: sid, q: "[click] Button: ðŸ•ï¸ Campus Life", i: "click:Button: ðŸ•ï¸ Campus Life", d: ts(35000), t: 'interaction', m: { action: 'campusLife', element: 'act-btn' } },
                 { s: sid, q: "nirf ranking?", i: "ranking", d: ts(30000), t: 'message' },
-                { s: sid, q: "[hover]  Hostels", i: "hover: Hostels", d: ts(25000), t: 'interaction', m: { duration: '500ms+' } },
+                { s: sid, q: "[hover] ðŸ  Hostels", i: "hover:ðŸ  Hostels", d: ts(25000), t: 'interaction', m: { duration: '500ms+' } },
                 { s: sid, q: "what is the weather in bangalore?", i: "unmatched", d: ts(20000), t: 'message' },
                 { s: sid, q: "how tall is the building?", i: "unmatched", d: ts(15000), t: 'message' },
                 { s: sid, q: "can you play music?", i: "unmatched", d: ts(12000), t: 'message' },
@@ -741,7 +734,7 @@
             const typingLogs = logs.filter(l => l.i && l.i.startsWith('typing:'));
             const wpmValues = typingLogs.map(l => (l.m && l.m.wpm) || 0).filter(v => v > 0);
             const avgWpm = wpmValues.length ? Math.round(wpmValues.reduce((a,b) => a+b, 0) / wpmValues.length) : 0;
-            document.getElementById('avgTyping').textContent = avgWpm ? avgWpm + ' WPM' : ' WPM';
+            document.getElementById('avgTyping').textContent = avgWpm ? avgWpm + ' WPM' : '— WPM';
         }
 
         let signalChart = null;
@@ -819,16 +812,16 @@
             const el = document.getElementById('unansweredList');
             document.getElementById('uqCount').textContent = unanswered.length;
             if (!unanswered.length) {
-                el.innerHTML = '<div class="empty-state">No unanswered questions  great! </div>';
+                el.innerHTML = '<div class="empty-state">No unanswered questions — great! ðŸŽ‰</div>';
                 return;
             }
             el.innerHTML = unanswered.slice(0, 30).map(l => {
                 const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 return `<div class="uq-item">
-                            <span style="flex-grow:1; margin-right:10px;"> "${l.q}"</span>
+                            <span style="flex-grow:1; margin-right:10px;">â“ "${l.q}"</span>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="uq-time" style="margin-left:0;">${time}</span>
-                                <button class="btn" style="padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);" onclick="resolveQuestion('${l.d}')"> Resolve</button>
+                                <button class="btn" style="padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);" onclick="resolveQuestion('${l.d}')">✅ Resolve</button>
                             </div>
                         </div>`;
             }).join('');
@@ -839,7 +832,7 @@
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('dashboard_token')
                 },
                 body: JSON.stringify({ timestamp })
             });
@@ -857,7 +850,7 @@
             el.innerHTML = moderated.slice(0, 30).map(l => {
                 const type = l.i.replace('moderated_', '');
                 const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                return `<div class="mod-item"><span> "${l.q}"</span><span class="mod-type">${type} - ${time}</span></div>`;
+                return `<div class="mod-item"><span>ðŸ›¡ï¸ "${l.q}"</span><span class="mod-type">${type} Â· ${time}</span></div>`;
             }).join('');
         }
 
@@ -923,7 +916,7 @@
                 el.innerHTML = '<div class="empty-state">No drop-offs detected</div>';
                 return;
             }
-            el.innerHTML = sorted.map(i => `<div class="uq-item"><span> ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} sessions</span></div>`).join('');
+            el.innerHTML = sorted.map(i => `<div class="uq-item"><span>ðŸšª ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} sessions</span></div>`).join('');
         }
 
         function renderCombinations(logs) {
@@ -951,7 +944,7 @@
                 el.innerHTML = '<div class="empty-state">No multi-intents detected</div>';
                 return;
             }
-            el.innerHTML = sorted.map(i => `<div class="uq-item"><span> ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} occurrences</span></div>`).join('');
+            el.innerHTML = sorted.map(i => `<div class="uq-item"><span>ðŸ”— ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} occurrences</span></div>`).join('');
         }
 
         function renderTypos(logs) {
@@ -965,7 +958,7 @@
             }
             el.innerHTML = typos.slice(0, 20).map(l => {
                 const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                return `<div class="mod-item"><span> "${l.q}"  ${l.m?.suggestions || 'Unknown'}</span><span class="mod-type">${time}</span></div>`;
+                return `<div class="mod-item"><span>âœï¸ "${l.q}" â†’ ${l.m?.suggestions || 'Unknown'}</span><span class="mod-type">${time}</span></div>`;
             }).join('');
         }
 
