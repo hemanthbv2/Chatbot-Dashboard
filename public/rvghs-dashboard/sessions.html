@@ -142,7 +142,7 @@ function getLogs(){ return window.cachedLogs || []; }
 
 async function refreshData() {
     try {
-        const res = await fetch('/api/dashboard/interactions', {
+        const res = await fetch('/api/dashboard/interactions?instituteId=rvghs', {
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         if (res.status === 401 || res.status === 403) window.location.href = '/'; else window.cachedLogs = await res.json();
