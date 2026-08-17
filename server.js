@@ -22,10 +22,39 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// Serverless / Atlas Database Connection Middleware
+const DEFAULT_ATLAS_URI = 'mongodb://hemanthbvrsst_db_user:rvceChatbot123@ac-ybdlrhg-shard-00-00.gmvea1j.mongodb.net:27017,ac-ybdlrhg-shard-00-01.gmvea1j.mongodb.net:27017,ac-ybdlrhg-shard-00-02.gmvea1j.mongodb.net:27017/rvcn_chatbot?ssl=true&replicaSet=atlas-b9tzmm-shard-0&authSource=admin&appName=ChatbotDashboard';
+const DB_URI = process.env.MONGO_URI || DEFAULT_ATLAS_URI;
+
+let isConnecting = false;
+async function connectToDatabase(req, res, next) {
+    if (mongoose.connection.readyState === 1) {
+        return next();
+    }
+    try {
+        if (!isConnecting) {
+            isConnecting = true;
+            await mongoose.connect(DB_URI, {
+                serverSelectionTimeoutMS: 8000,
+                connectTimeoutMS: 8000
+            });
+            console.log('Successfully connected to MongoDB Atlas');
+            isConnecting = false;
+        } else {
+            let attempts = 0;
+            while (mongoose.connection.readyState !== 1 && attempts < 20) {
+                await new Promise(r => setTimeout(r, 200));
+                attempts++;
+            }
+        }
+        next();
+    } catch (err) {
+        isConnecting = false;
+        console.error('MongoDB Atlas Connection Error:', err.message);
+        return res.status(500).json({ error: 'Database connection failed: ' + err.message });
+    }
+}
+app.use(connectToDatabase);
 
 // --- Auth Middleware ---
 const authenticateToken = (req, res, next) => {
