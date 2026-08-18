@@ -95,6 +95,62 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Database Seeder / Setup Route
+app.post('/api/setup', async (req, res) => {
+    try {
+        const salt = await bcrypt.genSalt(10);
+
+        // 1. Super Admin (Global Access to All Institutes)
+        const superAdminHash = await bcrypt.hash('admin123', salt);
+        await User.findOneAndUpdate(
+            { username: 'admin' },
+            { username: 'admin', passwordHash: superAdminHash, role: 'super_admin', instituteId: null },
+            { upsert: true, new: true }
+        );
+
+        // 2. RVGHS Institute Admin (RVGHS Only Access)
+        const rvghsHash = await bcrypt.hash('rvghs123', salt);
+        await User.findOneAndUpdate(
+            { username: 'rvghs_admin' },
+            { username: 'rvghs_admin', passwordHash: rvghsHash, role: 'institute_admin', instituteId: 'rvghs' },
+            { upsert: true, new: true }
+        );
+
+        // 3. RVCN Institute Admin (RVCN Only Access)
+        const rvcnHash = await bcrypt.hash('rvcn123', salt);
+        await User.findOneAndUpdate(
+            { username: 'rvcn_admin' },
+            { username: 'rvcn_admin', passwordHash: rvcnHash, role: 'institute_admin', instituteId: 'rvcn' },
+            { upsert: true, new: true }
+        );
+
+        // 4. Ensure Institutes Exist
+        await Institute.findOneAndUpdate(
+            { instituteId: 'rvghs' },
+            { instituteId: 'rvghs', name: 'RV Girls High School', apiKey: 'rvghs_key_12345', status: 'active' },
+            { upsert: true }
+        );
+        await Institute.findOneAndUpdate(
+            { instituteId: 'rvcn' },
+            { instituteId: 'rvcn', name: 'RV College of Nursing', apiKey: 'rvcn_key_12345', status: 'active' },
+            { upsert: true }
+        );
+
+        res.json({
+            ok: true,
+            message: 'Database seeded successfully! You can now log in.',
+            accounts: [
+                { username: 'admin', password: 'admin123', role: 'Super Admin (All Institutes)' },
+                { username: 'rvghs_admin', password: 'rvghs123', role: 'RVGHS Institute Admin' },
+                { username: 'rvcn_admin', password: 'rvcn123', role: 'RVCN Institute Admin' }
+            ]
+        });
+    } catch (err) {
+        console.error('Setup error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 2. Ingestion Route (For Chatbots to post logs)
 app.post('/api/logs', async (req, res) => {
     try {
