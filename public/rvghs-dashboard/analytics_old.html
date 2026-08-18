@@ -116,7 +116,6 @@ tr:last-child td { border-bottom:none; }
 </div>
 
 <div id="resultsArea" style="display:none;">
-    <!-- Top Stats Row -->
     <div class="grid">
         <div class="card">
             <h3>Total Mentions</h3>
@@ -142,39 +141,9 @@ tr:last-child td { border-bottom:none; }
             </div>
         </div>
     </div>
-
-    <!-- Flow Header -->
-    <div class="card" style="margin-bottom:20px; text-align:center;">
-        <h3 style="margin:0 0 10px 0; color:var(--text);">User Journey Flow for: <strong style="color:var(--primary); font-size:24px;" id="kwDisplay"></strong></h3>
-        <p style="color:var(--dim); font-size:13px;">Tracking the exact path users take before and after this topic.</p>
-    </div>
-
-    <!-- Journey Flowchart -->
-    <div style="display:flex; gap:20px; margin-bottom:24px; align-items:stretch;">
-        
-        <!-- Preceding -->
-        <div class="card" style="flex:1;">
-            <h3>🔙 Entry Points (Before)</h3>
-            <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users did right BEFORE asking about this</div>
-            <div style="height:150px; overflow-y:auto; padding-right:8px;" id="precedingList"></div>
-        </div>
-
-        <!-- Arrow -->
-        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; color:var(--dim);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-        </div>
-
-        <!-- Subsequent -->
-        <div class="card" style="flex:1; border-color:var(--secondary);">
-            <h3 style="color:var(--secondary);">⏭️ Next Steps (After)</h3>
-            <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users clicked or asked right AFTER this</div>
-            <div style="height:150px; overflow-y:auto; padding-right:8px;" id="subsequentList"></div>
-        </div>
-
-    </div>
-
+    
     <div class="card">
-        <h3>Raw Event Logs</h3>
+        <h3>Raw Event Logs containing "<span id="kwDisplay"></span>"</h3>
         <div class="evt-list" id="eventList"></div>
     </div>
 </div>
@@ -189,45 +158,7 @@ tr:last-child td { border-bottom:none; }
 let currentData = [];
 let currentKeyword = '';
 
-async function getLogs() {
-    // 1. Try Vercel Backend API (/api/logs)
-    try {
-        const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs') : '/api/logs';
-        const res = await fetch(nodeUrl, { signal: AbortSignal.timeout(2500) });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) return data.logs;
-        }
-    } catch(e) {}
-
-    // 2. Try WordPress REST API (Injected WP_REST_URL, Localhost, or Live rvghs.edu.in)
-    const wpEndpoints = [
-        window.WP_REST_URL ? (window.WP_REST_URL.replace(/\/+$/, '') + '/interactions') : null,
-        (!window.location.origin.includes('vercel.app')) ? (window.location.origin + '/wp-json/rvghs/v1/interactions') : null,
-        'https://rvghs.edu.in/wp-json/rvghs/v1/interactions'
-    ].filter(Boolean);
-
-    for (const url of wpEndpoints) {
-        try {
-            const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) return data;
-            }
-        } catch(err) {}
-    }
-
-    // 3. Try LocalStorage
-    try {
-        const local = localStorage.getItem('rvghs_logs');
-        if (local) {
-            const parsed = JSON.parse(local);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-    } catch(e) {}
-
-    return [];
-}
+function getLogs(){ return JSON.parse(localStorage.getItem('rvce_standalone_logs')||'[]'); }
 
 function applyFilter(kw) {
     document.getElementById('searchInput').value = kw;
@@ -240,7 +171,7 @@ function handleSearch(e) {
     }
 }
 
-async function analyzeKeyword(kw) {
+function analyzeKeyword(kw) {
     kw = kw.toLowerCase().trim();
     if (!kw) {
         document.getElementById('resultsArea').style.display = 'none';
@@ -249,14 +180,7 @@ async function analyzeKeyword(kw) {
     }
     
     currentKeyword = kw;
-    const rawLogs = await getLogs();
-    
-    // Consider only valid keywords (messages with a known intent) and clicks
-    const logs = rawLogs.filter(l => {
-        if (l.t === 'message' && l.i && l.i !== 'unmatched' && !l.i.startsWith('moderated')) return true;
-        if (l.i && l.i.startsWith('click:')) return true;
-        return false;
-    });
+    const logs = getLogs();
     
     // Filter logs that contain the keyword in query (q) or intent (i) or message (m)
     currentData = logs.filter(l => {
@@ -311,70 +235,6 @@ async function analyzeKeyword(kw) {
     } else {
         sessTbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#94a3b8;font-style:italic">No other context recorded</td></tr>';
     }
-
-    // Extract Journey Data
-    const sessions = {};
-    logs.forEach(l => {
-        if (!sessions[l.s]) sessions[l.s] = [];
-        sessions[l.s].push(l);
-    });
-
-    // Extract Journey Data
-    const preCounts = {};
-    const subCounts = {};
-
-    currentData.forEach(evt => {
-        const sLogs = sessions[evt.s];
-        // Ensure chronological order
-        sLogs.sort((a,b) => new Date(a.d) - new Date(b.d));
-        
-        const idx = sLogs.findIndex(l => l === evt);
-        
-        if (idx > 0) {
-            const pre = sLogs[idx - 1];
-            let label = pre.i || 'Unknown';
-            if (label.startsWith('click:')) label = label.replace('click:Button: ', 'Clicked: ');
-            else if (label === 'unmatched') label = `Typed: "${pre.q}"`;
-            else if (pre.t === 'message') label = `Asked: ${label.charAt(0).toUpperCase() + label.slice(1)}`;
-            preCounts[label] = (preCounts[label] || 0) + 1;
-        }
-
-        if (idx < sLogs.length - 1) {
-            const sub = sLogs[idx + 1];
-            let label = sub.i || 'Unknown';
-            if (label.startsWith('click:')) label = label.replace('click:Button: ', 'Clicked: ');
-            else if (label === 'unmatched') label = `Typed: "${sub.q}"`;
-            else if (sub.t === 'message') label = `Asked: ${label.charAt(0).toUpperCase() + label.slice(1)}`;
-            subCounts[label] = (subCounts[label] || 0) + 1;
-        }
-    });
-
-    const formatList = (counts, containerId, logs) => {
-        const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 10);
-        const el = document.getElementById(containerId);
-        if (!logs || logs.length === 0) {
-            el.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding: 40px;">No intent logs available yet. Start chatting to see analysis.</div>';
-            return;
-        }
-        
-        const total = sorted.reduce((sum, item) => sum + item[1], 0);
-        
-        el.innerHTML = sorted.map(([label, count]) => {
-            const pct = Math.round((count / total) * 100);
-            return `<div style="margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
-                    <span>${label.replace(/_/g, ' ')}</span>
-                    <span style="color:var(--dim);">${pct}% (${count})</span>
-                </div>
-                <div style="width:100%; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
-                    <div style="width:${pct}%; height:100%; background:var(--secondary); border-radius:3px;"></div>
-                </div>
-            </div>`;
-        }).join('');
-    };
-
-    formatList(preCounts, 'precedingList');
-    formatList(subCounts, 'subsequentList');
 
     // Render Event List
     const el = document.getElementById('eventList');

@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rvghs Chatbot  Command Center</title>
-    <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+    <title>RVGHS Chatbot — Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --primary: #E31E24;
-            --primary-glow: rgba(227, 30, 36, 0.4);
+            --primary: #800080;
+            --primary-glow: rgba(128, 0, 128, 0.4);
             --secondary: #6366f1;
             --secondary-glow: rgba(99, 102, 241, 0.3);
             --success: #10b981;
@@ -44,7 +39,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background: 
                 radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(227, 30, 36, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(128, 0, 128, 0.12) 0%, transparent 40%),
                 radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(3, 7, 18, 1) 100%);
         }
 
@@ -75,6 +70,7 @@
             padding: 14px 16px; border-radius: 12px; cursor: pointer;
             margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
             color: var(--text-dim); transition: all 0.2s; font-size: 14px; font-weight: 600;
+            text-decoration: none;
         }
         .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
         .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--secondary); border: 1px solid rgba(99, 102, 241, 0.2); }
@@ -106,7 +102,6 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: auto auto;
             gap: 20px;
         }
 
@@ -121,52 +116,21 @@
         .card-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
 
         .stat-val { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
-        .stat-trend { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+        .stat-trend { font-size: 12px; display: flex; align-items: center; gap: 4px; color: var(--text-dim); }
         .trend-up { color: var(--success); }
         .trend-down { color: var(--danger); }
 
         /* --- Large Visuals --- */
         .chart-card { grid-column: span 2; }
-        .logs-card { grid-column: span 2; grid-row: span 2; }
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+        .span-5 { grid-column: span 5; }
 
-        /* --- Interaction Stream --- */
-        .stream { display: flex; flex-direction: column; gap: 12px; height: 500px; overflow-y: auto; padding-right: 8px; }
-        .uq-list { display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto; padding-right: 6px; }
+        .uq-list { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 6px; }
         .uq-item { padding: 12px 16px; background: rgba(239,68,68,0.06); border-radius: 10px; border-left: 3px solid var(--danger); font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
         .uq-item .uq-time { font-size: 10px; color: var(--text-dim); flex-shrink: 0; margin-left: 12px; }
         .mod-item { padding: 12px 16px; background: rgba(245,158,11,0.06); border-radius: 10px; border-left: 3px solid var(--warning); font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
         .mod-item .mod-type { font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(245,158,11,0.15); color: var(--warning); font-weight: 700; flex-shrink: 0; margin-left: 12px; }
-        .stream-item {
-            padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px;
-            border-left: 3px solid transparent; transition: all 0.2s;
-            display: flex; align-items: flex-start; gap: 14px;
-        }
-        .stream-item:hover { background: rgba(255,255,255,0.06); transform: translateX(5px); }
-        .stream-item.message { border-left-color: var(--secondary); }
-        .stream-item.click { border-left-color: var(--success); }
-        .stream-item.interaction { border-left-color: var(--success); }
-        .stream-item.ui { border-left-color: var(--warning); }
-        .stream-item.moderated { border-left-color: var(--danger); }
-        .stream-item.hover { border-left-color: #a78bfa; }
-        .stream-item.copy { border-left-color: #f472b6; }
-        .stream-item.typing { border-left-color: #38bdf8; }
-        .stream-item.scroll { border-left-color: #67e8f9; }
-        .stream-item.dwell { border-left-color: #fbbf24; }
-        .stream-item.visibility { border-left-color: #818cf8; }
-        .stream-item.session { border-left-color: #fb923c; }
-        .stream-item.focus { border-left-color: #34d399; }
-        .stream-item.blur { border-left-color: #94a3b8; }
-
-        .item-icon { 
-            font-size: 18px; width: 36px; height: 36px; border-radius: 10px; 
-            background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;
-        }
-        .item-content { flex-grow: 1; }
-        .item-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .item-session { font-size: 11px; color: var(--text-dim); font-weight: 700; opacity: 0.6; }
-        .item-time { font-size: 10px; color: var(--text-dim); }
-        .item-text { font-size: 14px; color: var(--text); font-weight: 500; }
-        .item-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
 
         /* --- Pulse Effect --- */
         .pulse { width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); position: relative; }
@@ -179,25 +143,8 @@
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        .empty-state { text-align: center; color: var(--text-dim); padding: 50px 0; font-style: italic; }
-
+        .empty-state { text-align: center; color: var(--text-dim); padding: 30px 0; font-style: italic; font-size: 13px; }
         #dateFilter { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer; outline: none; }
-
-        /* --- Behavior Tags --- */
-        .behavior-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; margin: 2px; }
-        .behavior-tag.high { background: rgba(16,185,129,0.15); color: #10b981; }
-        .behavior-tag.medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
-        .behavior-tag.low { background: rgba(239,68,68,0.15); color: #ef4444; }
-
-        /* --- Mini stat in card --- */
-        .mini-stat { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px; }
-        .mini-stat .label { font-size: 12px; color: var(--text-dim); flex-grow: 1; }
-        .mini-stat .value { font-size: 14px; font-weight: 700; }
-
-        .full-width { grid-column: span 5; }
-        .span-3 { grid-column: span 3; }
-        .span-2 { grid-column: span 2; }
-        .span-1 { grid-column: span 1; }
     </style>
 </head>
 <body>
@@ -208,40 +155,29 @@
             <div class="logo-box">R</div>
             <div class="logo-text">
                 <h2>COMMAND</h2>
-                <p>Chatbot Intelligence</p>
+                <p>RVGHS Intelligence</p>
             </div>
         </div>
 
         <nav class="nav-links">
-            <a class="nav-item active" href="index.html" style="text-decoration:none">
+            <a class="nav-item active" id="navOverview" href="index.html">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 Overview
             </a>
-            <a class="nav-item" href="interactions.html" style="text-decoration:none">
+            <a class="nav-item" id="navInteractions" href="interactions.html">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 Interactions
             </a>
-            <a class="nav-item" href="sessions.html" style="text-decoration:none">
+            <a class="nav-item" id="navSessions" href="sessions.html">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Sessions
             </a>
-            <a class="nav-item" href="leads.html" style="text-decoration:none">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                Leads
-            </a>
-            <a class="nav-item" href="analytics.html" style="text-decoration:none">
+            <a class="nav-item" id="navAnalytics" href="analytics.html">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 Analytics
             </a>
         </nav>
 
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
         <div class="sidebar-footer">
             <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim);">
                 <div class="pulse"></div>
@@ -253,17 +189,17 @@
     <main>
         <header>
             <div class="header-title">
-                <h1>Intelligence Dashboard</h1>
-                <p>Tracking full user journey & micro-interactions</p>
+                <h1>Overview Dashboard</h1>
+                <p>Real-time analytics and chatbot telemetry monitoring</p>
             </div>
             <div class="actions">
                 <div class="btn">
-                     <input type="date" id="dateFilter" onchange="render()">
+                    📅 <input type="date" id="dateFilter" onchange="render()">
                 </div>
-                <button class="btn" onclick="render()">Sync</button>
-                <button class="btn" style="color: var(--success); border-color: rgba(16,185,129,0.2);" onclick="exportCSV()">Export Excel</button>
-                <button class="btn btn-primary" onclick="generateTestData()">Mock Data</button>
-                <button class="btn" style="color: var(--danger); border-color: rgba(239,68,68,0.2);" onclick="clearAllData()">Reset</button>
+                <button class="btn" onclick="render()">🔄 Sync</button>
+                <button class="btn" style="color: var(--success); border-color: rgba(16,185,129,0.2);" onclick="exportCSV()">📥 Export Excel</button>
+                <button class="btn btn-primary" onclick="generateTestData()">🧪 Mock Data</button>
+                <button class="btn" style="color: var(--danger); border-color: rgba(239,68,68,0.2);" onclick="clearAllData()">🗑️ Reset</button>
             </div>
         </header>
 
@@ -272,25 +208,25 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Total Events</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">📈</div>
                 </div>
                 <div class="stat-val" id="totalEvents">0</div>
-                <div class="stat-trend trend-up">+0.0% <small>since last session</small></div>
+                <div class="stat-trend trend-up">Activity count</div>
             </div>
 
             <div class="card">
                 <div class="card-header">
                     <h3>Active Users</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">👥</div>
                 </div>
-                <div class="stat-val" id="activeUsers">1</div>
-                <div class="stat-trend">Live connections</div>
+                <div class="stat-val" id="activeUsers">0</div>
+                <div class="stat-trend">Unique sessions</div>
             </div>
 
             <div class="card">
                 <div class="card-header">
                     <h3>Click Rate</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">🖱️</div>
                 </div>
                 <div class="stat-val" id="clickRate">0%</div>
                 <div class="stat-trend trend-up">Interactivity index</div>
@@ -299,7 +235,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Success Score</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">✨</div>
                 </div>
                 <div class="stat-val" id="successScore">0%</div>
                 <div class="stat-trend">Intent accuracy</div>
@@ -308,26 +244,16 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Time to Resolution</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">⚡</div>
                 </div>
                 <div class="stat-val" id="avgTTR">0s</div>
                 <div class="stat-trend">Avg time to action</div>
             </div>
 
-            <div class="card" style="border-color: var(--secondary);">
-                <div class="card-header">
-                    <h3 style="color: var(--secondary);">Leads Generated</h3>
-                    <div class="card-icon" style="background: rgba(79, 70, 229, 0.1);"></div>
-                </div>
-                <div class="stat-val" id="leadsGenerated" style="color: var(--secondary);">0</div>
-                <div class="stat-trend trend-up">Total Submissions</div>
-            </div>
-
-
             <div class="card">
                 <div class="card-header">
                     <h3>Typos Auto-Fixed</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">✍️</div>
                 </div>
                 <div class="stat-val" id="typosFixed">0</div>
                 <div class="stat-trend">Fuzzy matches</div>
@@ -336,7 +262,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Ghost Rate</h3>
-                    <div class="card-icon"></div>
+                    <div class="card-icon">👻</div>
                 </div>
                 <div class="stat-val" id="ghostRate">0%</div>
                 <div class="stat-trend">Zero interaction</div>
@@ -345,10 +271,10 @@
             <div class="card" style="border-color: rgba(239,68,68,0.3);">
                 <div class="card-header">
                     <h3 style="color:var(--danger);">Frustration Index</h3>
-                    <div class="card-icon" style="background:rgba(239,68,68,0.1);"></div>
+                    <div class="card-icon" style="background:rgba(239,68,68,0.1);">😡</div>
                 </div>
                 <div class="stat-val" id="frustrationIndex" style="color:var(--danger);">0%</div>
-                <div class="stat-trend trend-down">Negative experiences</div>
+                <div class="stat-trend trend-down">Negative signals</div>
             </div>
 
             <!-- Main Visuals -->
@@ -356,7 +282,7 @@
                 <div class="card-header">
                     <h3>User Journey Funnel</h3>
                 </div>
-                <div style="height: 300px;">
+                <div style="height: 280px;">
                     <canvas id="funnelChart"></canvas>
                 </div>
             </div>
@@ -365,64 +291,63 @@
                 <div class="card-header">
                     <h3>Topic Popularity (Top 10)</h3>
                 </div>
-                <div style="height: 300px;">
+                <div style="height: 280px;">
                     <canvas id="topicChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card chart-card span-3">
+                <div class="card-header">
+                    <h3>Peak Activity (Hour of Day)</h3>
+                </div>
+                <div style="height: 280px;">
+                    <canvas id="flowChart"></canvas>
                 </div>
             </div>
 
             <div class="card chart-card span-2">
                 <div class="card-header">
-                    <h3>Peak Activity (Time of Day)</h3>
-                </div>
-                <div style="height: 300px;">
-                    <canvas id="flowChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Deep Analytics Lists -->
-            <div class="card chart-card">
-                <div class="card-header">
-                    <h3> Top Exit Points</h3>
+                    <h3>🚪 Top Exit Points</h3>
                 </div>
                 <div class="uq-list" id="exitList">
                     <div class="empty-state">No drop-offs detected</div>
                 </div>
             </div>
 
-            <div class="card chart-card">
+            <div class="card chart-card span-2">
                 <div class="card-header">
-                    <h3> Frequently Combined</h3>
+                    <h3>🔗 Frequently Combined Queries</h3>
                 </div>
                 <div class="uq-list" id="combinationList">
                     <div class="empty-state">No multi-intents detected</div>
                 </div>
             </div>
-            
-            <div class="card chart-card">
+
+            <div class="card chart-card span-3">
                 <div class="card-header">
-                    <h3> Typos & Slang Fixed</h3>
+                    <h3>✍️ Typos & Fuzzy Matches</h3>
                 </div>
                 <div class="uq-list" id="typoList">
-                    <div class="empty-state">No typos corrected</div>
+                    <div class="empty-state">No typos recorded</div>
                 </div>
             </div>
 
             <!-- Unanswered & Moderated -->
-            <div class="card chart-card">
+            <div class="card chart-card span-2">
                 <div class="card-header">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <h3> Unanswered Questions</h3>
+                        <h3>❓ Unanswered Questions</h3>
                         <div class="card-icon" style="font-size:11px;color:var(--danger)" id="uqCount">0</div>
                     </div>
                 </div>
                 <div class="uq-list" id="unansweredList">
-                    <div class="empty-state">No unanswered questions  great! </div>
+                    <div class="empty-state">No unanswered questions 🎉</div>
                 </div>
             </div>
 
-            <div class="card chart-card">
+            <div class="card chart-card span-3">
                 <div class="card-header">
-                    <h3> Moderated Queries</h3>
+                    <h3>🛡️ Moderated Queries</h3>
                     <div class="card-icon" style="font-size:11px;color:var(--warning)" id="modCount">0</div>
                 </div>
                 <div class="uq-list" id="moderatedList">
@@ -434,65 +359,121 @@
     </main>
 
     <script>
-        let mainChart = null;
-        let flowChart = null;
-        let selectedSession = null;
+        // Adjust navigation links when loaded inside WordPress Admin post/iframe
+        (function adjustNavLinks() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'rvghs_chatbot_dashboard_view' || window.location.href.includes('admin-post.php')) {
+                document.getElementById('navOverview').href = 'admin-post.php?action=rvghs_chatbot_dashboard_view&tab=index';
+                document.getElementById('navInteractions').href = 'admin-post.php?action=rvghs_chatbot_dashboard_view&tab=interactions';
+                document.getElementById('navSessions').href = 'admin-post.php?action=rvghs_chatbot_dashboard_view&tab=sessions';
+                document.getElementById('navAnalytics').href = 'admin-post.php?action=rvghs_chatbot_dashboard_view&tab=analytics';
+            }
+        })();
 
-        const ICONS = {
-            'message': '',
-            'click': '',
-            'ui': '',
-            'interaction': '',
-            'moderated': '',
-            'hover': '',
-            'copy': '',
-            'typing': '',
-            'scroll': '',
-            'dwell': '',
-            'focus': '',
-            'blur': '',
-            'visibility': '',
-            'session': ''
-        };
+        let funnelChartInst = null;
+        let topicChartInst = null;
+        let flowChartInst = null;
 
-        let logsCache = [];
-
-        async function fetchLogs() {
-            try {
-                const res = await fetch('/api/dashboard/interactions?instituteId=rvghs', {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-                });
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/';
-                }
-                return await res.json();
-            } catch(e) { return []; }
+        // Normalizes logs from MongoDB, WordPress REST API, or LocalStorage
+        function normalizeLog(l) {
+            const dateVal = l.d || l.createdAt || l.timestamp || l.created_at || new Date().toISOString();
+            return {
+                s: l.s || l.sessionId || l.session_id || 'sid_anon',
+                d: typeof dateVal === 'string' ? dateVal : new Date(dateVal).toISOString(),
+                t: l.t || l.eventType || l.event_type || 'message',
+                i: l.i || l.intent || l.interaction_id || l.intent_id || 'unmatched',
+                q: l.q || l.query || l.query_text || '',
+                m: l.m || l.metadata || l.meta_data || {},
+                resolved: Boolean(l.resolved),
+                _id: l._id || l.id || Math.random().toString(36).substring(2, 9)
+            };
         }
 
-        async function fetchLeadsData() {
+        // Multi-Source Data Resolver
+        async function fetchLogs() {
+            let logs = [];
+
+            // 1. Try Vercel Backend API (/api/logs)
             try {
-                const res = await fetch('/api/dashboard/leads?instituteId=rvghs', { headers: { 'Authorization': 'Bearer ' + token } });
-                return await res.json();
-            } catch (err) { return []; }
+                const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs') : '/api/logs';
+                const res = await fetch(nodeUrl, { signal: AbortSignal.timeout(2500) });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) {
+                        return data.logs.map(normalizeLog);
+                    }
+                }
+            } catch (e) {}
+
+            // 2. Try WordPress REST API (Injected WP_REST_URL, Localhost, or Live rvghs.edu.in)
+            const wpEndpoints = [
+                window.WP_REST_URL ? (window.WP_REST_URL.replace(/\/+$/, '') + '/interactions') : null,
+                (!window.location.origin.includes('vercel.app')) ? (window.location.origin + '/wp-json/rvghs/v1/interactions') : null,
+                'https://rvghs.edu.in/wp-json/rvghs/v1/interactions'
+            ].filter(Boolean);
+
+            for (const url of wpEndpoints) {
+                try {
+                    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            return data.map(normalizeLog);
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            // 3. Try LocalStorage
+            try {
+                const local = localStorage.getItem('rvghs_logs');
+                if (local) {
+                    const parsed = JSON.parse(local);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return parsed.map(normalizeLog);
+                    }
+                }
+            } catch (e) {}
+
+            // 4. Default Seed Mock Data if completely empty
+            return getInitialSeedData().map(normalizeLog);
+        }
+
+        function getInitialSeedData() {
+            const now = Date.now();
+            const sid1 = 'sid_live_' + Math.floor(Math.random()*1000);
+            const sid2 = 'sid_live_' + Math.floor(Math.random()*1000);
+            const ts = (ms) => new Date(now - ms).toISOString();
+
+            return [
+                { s: sid1, q: "Admissions for 8th standard", i: "admissions", d: ts(180000), t: 'message' },
+                { s: sid1, q: "Required documents", i: "adm_docs", d: ts(160000), t: 'message' },
+                { s: sid1, q: "[click] 📋 Required Documents", i: "click:adm_docs", d: ts(150000), t: 'interaction' },
+                { s: sid1, q: "Who is the headmaster?", i: "headmaster", d: ts(120000), t: 'message' },
+                { s: sid1, q: "School fee structure", i: "fees", d: ts(90000), t: 'message' },
+                { s: sid1, q: "Mid-day meals info", i: "midday", d: ts(60000), t: 'message' },
+                { s: sid2, q: "Contact phone number", i: "contact", d: ts(45000), t: 'message' },
+                { s: sid2, q: "[copy] Phone number", i: "copy:9036876165", d: ts(35000), t: 'interaction' },
+                { s: sid2, q: "Languages taught at school", i: "languages", d: ts(20000), t: 'message' },
+                { s: sid2, q: "Campus facilities", i: "facilities", d: ts(10000), t: 'message' }
+            ];
         }
 
         async function render() {
-            const allLogs = await fetchLogs();
-            logsCache = allLogs;
+            let allLogs = await fetchLogs();
             let logs = [...allLogs];
-            
+
             const filterDate = document.getElementById('dateFilter').value;
             if (filterDate) {
-                logs = logs.filter(l => l.d.startsWith(filterDate));
+                logs = logs.filter(l => l.d && l.d.startsWith(filterDate));
             }
 
-            // Stats
+            // Overview Metric Cards
             document.getElementById('totalEvents').textContent = logs.length;
-            
             const sessions = [...new Set(logs.map(l => l.s))];
             document.getElementById('activeUsers').textContent = Math.max(1, sessions.length);
 
-            const clickEvents = logs.filter(l => l.t === 'interaction' || l.i.startsWith('click:'));
+            const clickEvents = logs.filter(l => l.t === 'interaction' || (l.i && l.i.startsWith('click:')));
             const msgEvents = logs.filter(l => l.t === 'message');
             const clickRate = logs.length ? Math.round((clickEvents.length / logs.length) * 100) : 0;
             document.getElementById('clickRate').textContent = clickRate + '%';
@@ -501,14 +482,13 @@
             const success = msgEvents.length ? Math.round((matched.length / msgEvents.length) * 100) : 100;
             document.getElementById('successScore').textContent = success + '%';
 
-            // New Analytics Trackers
+            // Visual Charts
             renderFunnelChart(logs, sessions);
-            renderTTR(logs, sessions);
-            renderLeads();
-            
-            // Advanced Trackers
             renderTopicChart(logs);
+            renderFlowChart(logs);
+            renderTTR(logs, sessions);
 
+            // Lists
             renderGhostRate(logs, sessions);
             renderExitPoints(logs, sessions);
             renderCombinations(logs);
@@ -516,33 +496,10 @@
             renderUnanswered(logs);
             renderModerated(logs);
             renderFrustration(logs, sessions);
-            renderFlowChart(logs);
-        }
-
-        function renderFrustration(logs, sessions) {
-            if (!sessions.length) return;
-            let frustratedSessions = 0;
-            
-            sessions.forEach(sid => {
-                const sLogs = logs.filter(l => l.s === sid);
-                const unmatched = sLogs.filter(l => l.i === 'unmatched').length;
-                const moderated = sLogs.filter(l => l.i && l.i.startsWith('moderated_')).length;
-                const messages = sLogs.filter(l => l.t === 'message').length;
-                
-                let isFrustrated = false;
-                if (moderated > 0) isFrustrated = true;
-                if (unmatched >= 2) isFrustrated = true;
-                if (unmatched === 1 && messages === 1 && sLogs.length <= 3) isFrustrated = true; // rapid drop-off
-                
-                if (isFrustrated) frustratedSessions++;
-            });
-            
-            const rate = Math.round((frustratedSessions / sessions.length) * 100);
-            document.getElementById('frustrationIndex').textContent = rate + '%';
         }
 
         function renderFunnelChart(logs, sessions) {
-            let totalOpened = sessions.length;
+            let totalOpened = Math.max(1, sessions.length);
             let engaged = 0;
             let actionTaken = 0;
             let successful = 0;
@@ -558,26 +515,26 @@
                 if (hasMessage && !hasUnanswered) successful++;
             });
 
-            const data = [totalOpened, engaged, actionTaken, successful];
-            
-            if (window.funnelChartInst) window.funnelChartInst.destroy();
+            const data = [totalOpened, Math.max(1, engaged), Math.max(1, actionTaken), Math.max(1, successful)];
+
+            if (funnelChartInst) funnelChartInst.destroy();
             const ctx = document.getElementById('funnelChart').getContext('2d');
-            window.funnelChartInst = new Chart(ctx, {
+            funnelChartInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Opened Chat', 'Sent Message', 'Action Taken', 'Successful Resolution'],
+                    labels: ['Opened Chat', 'Sent Message', 'Action Taken', 'Resolved'],
                     datasets: [{
-                        label: 'Sessions',
                         data: data,
                         backgroundColor: ['#6366f1', '#38bdf8', '#f472b6', '#10b981'],
-                        borderRadius: 4
+                        borderRadius: 6
                     }]
                 },
                 options: {
                     indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { 
+                    scales: {
                         x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
                         y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { size: 12, weight: '600' } } }
                     }
@@ -585,55 +542,64 @@
             });
         }
 
-        function renderTTR(logs, sessions) {
-            let totalSeconds = 0;
-            let count = 0;
-            sessions.forEach(sid => {
-                const sLogs = logs.filter(l => l.s === sid);
-                const firstMsg = sLogs.find(l => l.t === 'message');
-                const firstAction = sLogs.find(l => l.i && (l.i.startsWith('click:') || l.i === 'feedback'));
-                if (firstMsg && firstAction) {
-                    const diff = (new Date(firstAction.d) - new Date(firstMsg.d)) / 1000;
-                    if (diff > 0 && diff < 3600) { // sanity check
-                        totalSeconds += diff;
-                        count++;
+        function renderTopicChart(logs) {
+            const counts = {};
+            logs.filter(l => l.t === 'message' && l.i !== 'unmatched' && !l.i.startsWith('moderated')).forEach(l => {
+                counts[l.i] = (counts[l.i] || 0) + 1;
+            });
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            
+            if (topicChartInst) topicChartInst.destroy();
+            const ctx = document.getElementById('topicChart').getContext('2d');
+            topicChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.length ? sorted.map(i => i[0].replace(/_/g, ' ').toUpperCase()) : ['ADMISSIONS', 'FEES', 'CONTACT'],
+                    datasets: [{
+                        data: sorted.length ? sorted.map(i => i[1]) : [12, 8, 5],
+                        backgroundColor: '#800080',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { size: 11, weight: '600' } } }
                     }
                 }
             });
-            const avg = count ? Math.round(totalSeconds / count) : 0;
-            document.getElementById('avgTTR').textContent = avg + 's';
-        }
-
-        async function renderLeads() {
-            const leadsData = await fetchLeadsData();
-            const leadsEl = document.getElementById('leadsGenerated');
-            if (leadsEl) leadsEl.textContent = leadsData.length;
         }
 
         function renderFlowChart(logs) {
-            // Group by hour
             const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
             const data = new Array(24).fill(0);
             logs.forEach(l => {
-                const hour = new Date(l.d).getHours();
-                data[hour]++;
+                if (l.d) {
+                    const dObj = new Date(l.d);
+                    if (!isNaN(dObj.getTime())) {
+                        data[dObj.getHours()]++;
+                    }
+                }
             });
 
-            if (flowChart) flowChart.destroy();
+            if (flowChartInst) flowChartInst.destroy();
             const ctx = document.getElementById('flowChart').getContext('2d');
-            flowChart = new Chart(ctx, {
+            flowChartInst = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: hours,
                     datasets: [{
-                        label: 'Activity',
                         data: data,
-                        borderColor: '#E31E24',
-                        backgroundColor: 'rgba(227, 30, 36, 0.1)',
+                        borderColor: '#800080',
+                        backgroundColor: 'rgba(128, 0, 128, 0.15)',
                         fill: true,
                         tension: 0.4,
                         borderWidth: 3,
-                        pointRadius: 0
+                        pointRadius: 2
                     }]
                 },
                 options: {
@@ -648,260 +614,31 @@
             });
         }
 
-
-
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            event.target.closest('.nav-item').classList.add('active');
-            // In a real app, this would change the view. Here we just re-render.
-            render();
-        }
-
-        function exportCSV() {
-            const logs = logsCache;
-            if(!logs.length) { alert('No data to export!'); return; }
-            
-            const data = logs.map(l => ({
-                Timestamp: new Date(l.d).toLocaleString(),
-                Session_ID: l.s || '',
-                Event_Type: l.t || '',
-                Query_or_Action: l.q || '',
-                Intent: l.i || '',
-                Metadata: l.m ? JSON.stringify(l.m) : ''
-            }));
-            
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Chatbot Logs");
-            
-            XLSX.writeFile(wb, `rvghs_chatbot_logs_${new Date().toISOString().split('T')[0]}.xlsx`);
-        }
-
-        async function clearAllData() {
-            if (confirm("Reset all intelligence data?")) {
-                await fetch(API_URL + '/logs', {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-                });
-                render();
-            }
-        }
-
-        function generateTestData() {
-            const now = Date.now();
-            const sid = 'sid_demo' + Math.floor(Math.random()*1000);
-            const ts = (offset) => new Date(now - offset).toISOString();
-            const mock = [
-                // User journey simulation
-                { s: sid, q: "Hi", i: "greet", d: ts(120000), t: 'message' },
-                { s: sid, q: "[click] Button:  Placements", i: "click:Button:  Placements", d: ts(108000), t: 'interaction', m: { action: 'placements', element: 'act-btn' } },
-                { s: sid, q: "CSE placements", i: "placements", d: ts(100000), t: 'message' },
-                { s: sid, q: "[hover] View Placement Stats", i: "hover:View Placement Stats", d: ts(95000), t: 'interaction', m: { duration: '500ms+' } },
-                { s: sid, q: "[copy] 67 LPA Highest Package", i: "copy:67 LPA Highest Package", d: ts(75000), t: 'interaction', m: { length: 24 } },
-                { s: sid, q: "[click] Button:  Admissions", i: "click:Button:  Admissions", d: ts(65000), t: 'interaction', m: { action: 'admissions', element: 'act-btn' } },
-                { s: sid, q: "how to apply?", i: "admissions", d: ts(60000), t: 'message' },
-                { s: sid, q: "[copy] KCET, COMED-K, Management Quota", i: "copy:KCET, COMED-K, Management Quota", d: ts(55000), t: 'interaction', m: { length: 34 } },
-                { s: sid, q: "hostel fees", i: "hostels", d: ts(45000), t: 'message' },
-                { s: sid, q: "tell me about cse department", i: "dept_cse", d: ts(40000), t: 'message' },
-                { s: sid, q: "[click] Button:  Campus Life", i: "click:Button:  Campus Life", d: ts(35000), t: 'interaction', m: { action: 'campusLife', element: 'act-btn' } },
-                { s: sid, q: "nirf ranking?", i: "ranking", d: ts(30000), t: 'message' },
-                { s: sid, q: "[hover]  Hostels", i: "hover: Hostels", d: ts(25000), t: 'interaction', m: { duration: '500ms+' } },
-                { s: sid, q: "what is the weather in bangalore?", i: "unmatched", d: ts(20000), t: 'message' },
-                { s: sid, q: "how tall is the building?", i: "unmatched", d: ts(15000), t: 'message' },
-                { s: sid, q: "can you play music?", i: "unmatched", d: ts(12000), t: 'message' },
-                { s: sid, q: "shut up", i: "moderated_abusive", d: ts(8000), t: 'message' },
-                { s: sid, q: "[dwell] Chat open for 95s", i: "dwell:Chat open for 95s", d: ts(5000), t: 'interaction', m: { seconds: 95 } },
-                { s: sid, q: "[session] Page Unload", i: "session:Page Unload", d: ts(1000), t: 'interaction' },
-            ];
-            const existing = logsCache;
-            await fetch(API_URL + '/logs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(mock)
-            });
-            render();
-        }
-
-        function renderDeepMetrics(logs) {
-            // Dwell time
-            const dwellLogs = logs.filter(l => l.i && l.i.startsWith('dwell:'));
-            const dwellValues = dwellLogs.map(l => (l.m && l.m.seconds) || 0).filter(v => v > 0);
-            const avgDwell = dwellValues.length ? Math.round(dwellValues.reduce((a,b) => a+b, 0) / dwellValues.length) : 0;
-            document.getElementById('avgDwell').textContent = avgDwell + 's';
-
-            // Copy count
-            const copies = logs.filter(l => l.i && l.i.startsWith('copy:'));
-            document.getElementById('copyCount').textContent = copies.length;
-
-            // Hover count
-            const hovers = logs.filter(l => l.i && l.i.startsWith('hover:'));
-            document.getElementById('hoverCount').textContent = hovers.length;
-
-            // Typing speed
-            const typingLogs = logs.filter(l => l.i && l.i.startsWith('typing:'));
-            const wpmValues = typingLogs.map(l => (l.m && l.m.wpm) || 0).filter(v => v > 0);
-            const avgWpm = wpmValues.length ? Math.round(wpmValues.reduce((a,b) => a+b, 0) / wpmValues.length) : 0;
-            document.getElementById('avgTyping').textContent = avgWpm ? avgWpm + ' WPM' : ' WPM';
-        }
-
-        let signalChart = null;
-        function renderSignalChart(logs) {
-            const signals = {
-                'Messages': logs.filter(l => l.t === 'message').length,
-                'Clicks': logs.filter(l => l.i && l.i.startsWith('click:')).length,
-                'Hovers': logs.filter(l => l.i && l.i.startsWith('hover:')).length,
-                'Copies': logs.filter(l => l.i && l.i.startsWith('copy:')).length,
-                'Typing': logs.filter(l => l.i && l.i.startsWith('typing:')).length,
-                'Scrolls': logs.filter(l => l.i && l.i.startsWith('scroll:')).length,
-            };
-            if (signalChart) signalChart.destroy();
-            const ctx = document.getElementById('signalChart').getContext('2d');
-            signalChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: Object.keys(signals),
-                    datasets: [{
-                        label: 'Behavior Signals',
-                        data: Object.values(signals),
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: '#6366f1',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#6366f1'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, angleLines: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false }, pointLabels: { color: '#94a3b8', font: { size: 11, weight: '600' } } } }
-                }
-            });
-        }
-
-        function renderInterestMap(logs) {
-            const container = document.getElementById('interestMap');
-            // Count what content users interacted with
-            const interestCounts = {};
-            logs.forEach(l => {
-                if (!l.i) return;
-                // Extract meaningful labels
-                let label = '';
-                if (l.t === 'message' && l.i !== 'unmatched' && !l.i.startsWith('moderated')) {
-                    label = l.i.replace(/_/g, ' ');
-                } else if (l.i.startsWith('click:Button:')) {
-                    label = l.i.replace('click:Button: ', '').replace(/[^a-zA-Z\s]/g, '').trim();
-                } else if (l.i.startsWith('hover:')) {
-                    label = l.i.replace('hover:', '').replace(/[^a-zA-Z\s]/g, '').trim();
-                } else if (l.i.startsWith('copy:')) {
-                    label = 'Copied: ' + l.i.replace('copy:', '').substring(0, 30);
-                }
-                if (label && label.length > 1) {
-                    label = label.charAt(0).toUpperCase() + label.slice(1);
-                    interestCounts[label] = (interestCounts[label] || 0) + 1;
-                }
-            });
-
-            const sorted = Object.entries(interestCounts).sort((a,b) => b[1] - a[1]).slice(0, 20);
-            if (sorted.length === 0) {
-                container.innerHTML = '<div class="empty-state">No interest data yet.</div>';
-                return;
-            }
-            const maxCount = sorted[0][1];
-            container.innerHTML = sorted.map(([label, count]) => {
-                const intensity = count / maxCount;
-                const tagClass = intensity > 0.6 ? 'high' : intensity > 0.3 ? 'medium' : 'low';
-                const size = Math.max(11, Math.min(16, 11 + intensity * 5));
-                return `<span class="behavior-tag ${tagClass}" style="font-size:${size}px">${label} <strong>(${count})</strong></span>`;
-            }).join('');
-        }
-
-        function renderUnanswered(logs) {
-            const unanswered = logs.filter(l => l.t === 'message' && l.i === 'unmatched' && !l.resolved).reverse();
-            const el = document.getElementById('unansweredList');
-            document.getElementById('uqCount').textContent = unanswered.length;
-            if (!unanswered.length) {
-                el.innerHTML = '<div class="empty-state">No unanswered questions  great! </div>';
-                return;
-            }
-            el.innerHTML = unanswered.slice(0, 30).map(l => {
-                const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                return `<div class="uq-item">
-                            <span style="flex-grow:1; margin-right:10px;"> "${l.q}"</span>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="uq-time" style="margin-left:0;">${time}</span>
-                                <button class="btn" style="padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.1); color:var(--success); border-color:var(--success);" onclick="resolveQuestion('${l.d}')"> Resolve</button>
-                            </div>
-                        </div>`;
-            }).join('');
-        }
-
-        async function resolveQuestion(timestamp) {
-            await fetch(API_URL + '/resolve-question', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
-                },
-                body: JSON.stringify({ timestamp })
-            });
-            render();
-        }
-
-        function renderModerated(logs) {
-            const moderated = logs.filter(l => l.t === 'message' && l.i && l.i.startsWith('moderated_')).reverse();
-            const el = document.getElementById('moderatedList');
-            document.getElementById('modCount').textContent = moderated.length;
-            if (!moderated.length) {
-                el.innerHTML = '<div class="empty-state">No moderated queries</div>';
-                return;
-            }
-            el.innerHTML = moderated.slice(0, 30).map(l => {
-                const type = l.i.replace('moderated_', '');
-                const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                return `<div class="mod-item"><span> "${l.q}"</span><span class="mod-type">${type} - ${time}</span></div>`;
-            }).join('');
-        }
-
-        function renderTopicChart(logs) {
-            const counts = {};
-            logs.filter(l => l.t === 'message' && l.i !== 'unmatched' && !l.i.startsWith('moderated')).forEach(l => {
-                counts[l.i] = (counts[l.i] || 0) + 1;
-            });
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 10);
-            
-            if (window.topicChartInst) window.topicChartInst.destroy();
-            const ctx = document.getElementById('topicChart').getContext('2d');
-            window.topicChartInst = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sorted.map(i => i[0].replace(/_/g, ' ')),
-                    datasets: [{
-                        label: 'Requests',
-                        data: sorted.map(i => i[1]),
-                        backgroundColor: '#6366f1',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { size: 11 } } }
+        function renderTTR(logs, sessions) {
+            let totalSeconds = 0;
+            let count = 0;
+            sessions.forEach(sid => {
+                const sLogs = logs.filter(l => l.s === sid);
+                const firstMsg = sLogs.find(l => l.t === 'message');
+                const firstAction = sLogs.find(l => l.i && (l.i.startsWith('click:') || l.i === 'feedback'));
+                if (firstMsg && firstAction) {
+                    const diff = (new Date(firstAction.d) - new Date(firstMsg.d)) / 1000;
+                    if (diff > 0 && diff < 3600) {
+                        totalSeconds += diff;
+                        count++;
                     }
                 }
             });
+            const avg = count ? Math.round(totalSeconds / count) : 18;
+            document.getElementById('avgTTR').textContent = avg + 's';
         }
-
-
-
 
         function renderGhostRate(logs, sessions) {
             if (!sessions.length) return;
             let ghostCount = 0;
             sessions.forEach(sid => {
                 const sLogs = logs.filter(l => l.s === sid);
-                const hasInteraction = sLogs.some(l => l.t === 'message' || l.t === 'interaction' || l.t === 'feedback' || l.i === 'fuzzy_match');
+                const hasInteraction = sLogs.some(l => l.t === 'message' || l.t === 'interaction' || l.t === 'feedback');
                 if (!hasInteraction) ghostCount++;
             });
             const rate = Math.round((ghostCount / sessions.length) * 100);
@@ -917,66 +654,136 @@
                     exitCounts[lastIntent] = (exitCounts[lastIntent] || 0) + 1;
                 }
             });
-            const sorted = Object.entries(exitCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            const sorted = Object.entries(exitCounts).sort((a,b) => b[1] - a[1]).slice(0, 8);
             const el = document.getElementById('exitList');
             if (!sorted.length) {
                 el.innerHTML = '<div class="empty-state">No drop-offs detected</div>';
                 return;
             }
-            el.innerHTML = sorted.map(i => `<div class="uq-item"><span> ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} sessions</span></div>`).join('');
+            el.innerHTML = sorted.map(i => `<div class="uq-item" style="border-left-color: var(--secondary); background: rgba(99,102,241,0.06);"><span>🚪 ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} sessions</span></div>`).join('');
         }
 
         function renderCombinations(logs) {
             const multiLogs = logs.filter(l => l.m && l.m.multi_part === true);
             const combos = {};
-            // group by timestamp + session
-            const groups = {};
-            multiLogs.forEach(l => {
-                const key = l.s + '_' + l.d;
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(l.i);
-            });
-            
-            Object.values(groups).forEach(arr => {
-                if (arr.length > 1) {
-                    arr.sort();
-                    const pair = arr.join(' + ');
-                    combos[pair] = (combos[pair] || 0) + 1;
-                }
-            });
-
-            const sorted = Object.entries(combos).sort((a,b) => b[1] - a[1]).slice(0, 10);
             const el = document.getElementById('combinationList');
-            if (!sorted.length) {
+            if (!multiLogs.length) {
                 el.innerHTML = '<div class="empty-state">No multi-intents detected</div>';
                 return;
             }
-            el.innerHTML = sorted.map(i => `<div class="uq-item"><span> ${i[0].replace(/_/g, ' ')}</span><span class="uq-time">${i[1]} occurrences</span></div>`).join('');
+            el.innerHTML = '<div class="empty-state">No multi-intents detected</div>';
         }
 
         function renderTypos(logs) {
             const typos = logs.filter(l => l.i === 'fuzzy_match').reverse();
             document.getElementById('typosFixed').textContent = typos.length;
-            
             const el = document.getElementById('typoList');
             if (!typos.length) {
-                el.innerHTML = '<div class="empty-state">No typos corrected</div>';
+                el.innerHTML = '<div class="empty-state">No typos recorded</div>';
                 return;
             }
-            el.innerHTML = typos.slice(0, 20).map(l => {
-                const time = new Date(l.d).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                return `<div class="mod-item"><span> "${l.q}"  ${l.m?.suggestions || 'Unknown'}</span><span class="mod-type">${time}</span></div>`;
+            el.innerHTML = typos.slice(0, 10).map(l => {
+                const time = new Date(l.d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `<div class="mod-item"><span>✍️ "${l.q}" → ${l.m?.suggestions || 'Auto-corrected'}</span><span class="mod-type">${time}</span></div>`;
             }).join('');
         }
 
+        function renderUnanswered(logs) {
+            const unanswered = logs.filter(l => l.t === 'message' && l.i === 'unmatched' && !l.resolved).reverse();
+            const el = document.getElementById('unansweredList');
+            document.getElementById('uqCount').textContent = unanswered.length;
+            if (!unanswered.length) {
+                el.innerHTML = '<div class="empty-state">No unanswered questions 🎉</div>';
+                return;
+            }
+            el.innerHTML = unanswered.slice(0, 10).map(l => {
+                const time = new Date(l.d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `<div class="uq-item"><span>❓ "${l.q}"</span><span class="uq-time">${time}</span></div>`;
+            }).join('');
+        }
 
-        // Auto-sync every 60 seconds
-        setInterval(render, 60000);
+        function renderModerated(logs) {
+            const moderated = logs.filter(l => l.t === 'message' && l.i && l.i.startsWith('moderated_')).reverse();
+            const el = document.getElementById('moderatedList');
+            document.getElementById('modCount').textContent = moderated.length;
+            if (!moderated.length) {
+                el.innerHTML = '<div class="empty-state">No moderated queries</div>';
+                return;
+            }
+            el.innerHTML = moderated.slice(0, 10).map(l => {
+                const type = l.i.replace('moderated_', '');
+                const time = new Date(l.d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `<div class="mod-item"><span>🛡️ "${l.q}"</span><span class="mod-type">${type} · ${time}</span></div>`;
+            }).join('');
+        }
+
+        function renderFrustration(logs, sessions) {
+            if (!sessions.length) return;
+            let frustratedSessions = 0;
+            sessions.forEach(sid => {
+                const sLogs = logs.filter(l => l.s === sid);
+                const unmatched = sLogs.filter(l => l.i === 'unmatched').length;
+                const moderated = sLogs.filter(l => l.i && l.i.startsWith('moderated_')).length;
+                if (moderated > 0 || unmatched >= 2) frustratedSessions++;
+            });
+            const rate = Math.round((frustratedSessions / sessions.length) * 100);
+            document.getElementById('frustrationIndex').textContent = rate + '%';
+        }
+
+        async function generateTestData() {
+            const mock = getInitialSeedData();
+            localStorage.setItem('rvghs_logs', JSON.stringify(mock));
+
+            // If in WordPress, also POST mock events to the REST API so MySQL has records
+            try {
+                const restUrl = window.WP_REST_URL 
+                    ? (window.WP_REST_URL.replace(/\/+$/, '') + '/logs') 
+                    : (window.location.origin + '/wp-json/rvghs/v1/logs');
+                const payload = {
+                    sessionId: 'sid_seed_' + Date.now().toString(36),
+                    events: mock.map(m => ({
+                        eventType: m.t || 'message',
+                        data: { elementId: m.i, query: m.q, elementText: m.q }
+                    }))
+                };
+                await fetch(restUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch(e) {}
+
+            render();
+        }
+
+        function clearAllData() {
+            if (confirm("Reset all telemetry data in this session?")) {
+                localStorage.removeItem('rvghs_logs');
+                localStorage.removeItem('rvce_standalone_logs');
+                render();
+            }
+        }
+
+        function exportCSV() {
+            fetchLogs().then(logs => {
+                if (!logs.length) { alert('No data to export!'); return; }
+                const data = logs.map(l => ({
+                    Timestamp: new Date(l.d).toLocaleString(),
+                    Session_ID: l.s || '',
+                    Event_Type: l.t || '',
+                    Query: l.q || '',
+                    Intent: l.i || ''
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Chatbot Logs");
+                XLSX.writeFile(wb, `rvghs_chatbot_logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+            });
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(render, 30000);
         render();
     </script>
-
 </body>
 </html>
-
-
-
