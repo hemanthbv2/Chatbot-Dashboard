@@ -169,9 +169,20 @@
     <script>
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
+        const instituteId = localStorage.getItem('instituteId');
         
         if (token) {
-            showDashboard();
+            if (role === 'institute_admin') {
+                if (instituteId === 'rvghs') {
+                    window.location.href = '/rvghs-dashboard/index.html';
+                } else if (instituteId === 'rvcn') {
+                    window.location.href = '/rvcn-dashboard/index.html';
+                }
+            } else if (role === 'super_admin') {
+                showDashboard();
+            } else {
+                showDashboard();
+            }
         }
 
         // --- Login Form ---
