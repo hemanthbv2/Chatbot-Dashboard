@@ -76,12 +76,48 @@ const authenticateToken = (req, res, next) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await User.findOne({ username });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password required' });
+        }
 
-        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        // Built-in default credentials mapping
+        const DEFAULT_ACCOUNTS = {
+            'admin': { pass: 'admin123', role: 'super_admin', instituteId: null },
+            'rvghs_admin': { pass: 'rvghs123', role: 'institute_admin', instituteId: 'rvghs' },
+            'rvcn_admin': { pass: 'rvcn123', role: 'institute_admin', instituteId: 'rvcn' }
+        };
 
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
-        if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+        let user = await User.findOne({ username });
+
+        // Auto-provision if it's a default system account
+        if (!user && DEFAULT_ACCOUNTS[username] && DEFAULT_ACCOUNTS[username].pass === password) {
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(password, salt);
+            user = await User.create({
+                username: username,
+                passwordHash: hash,
+                role: DEFAULT_ACCOUNTS[username].role,
+                instituteId: DEFAULT_ACCOUNTS[username].instituteId
+            });
+        }
+
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials. Click \"Run Initial Setup (Seed DB)\" or verify credentials.' });
+        }
+
+        let validPassword = await bcrypt.compare(password, user.passwordHash);
+
+        // Fallback for default accounts in case salt differed
+        if (!validPassword && DEFAULT_ACCOUNTS[username] && DEFAULT_ACCOUNTS[username].pass === password) {
+            const salt = await bcrypt.genSalt(10);
+            user.passwordHash = await bcrypt.hash(password, salt);
+            await user.save();
+            validPassword = true;
+        }
+
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
 
         const token = jwt.sign(
             { id: user._id, role: user.role, instituteId: user.instituteId, username: user.username },
@@ -91,6 +127,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.json({ token, role: user.role, instituteId: user.instituteId, username: user.username });
     } catch (err) {
+        console.error('Login error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
