@@ -81,10 +81,10 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <aside>
 <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
 <nav>
-<a class="ni" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
-<a class="ni active" href="interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
-<a class="ni" href="sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
-<a class="ni" href="analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
+<a class="ni" href="/rvghs-dashboard/index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+<a class="ni active" href="/rvghs-dashboard/interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
+<a class="ni" href="/rvghs-dashboard/sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
+<a class="ni" href="/rvghs-dashboard/analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
 </nav>
 <div class="sf">
     <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);margin-bottom:12px;"><div class="pulse"></div>SYSTEM ONLINE</div>
@@ -240,27 +240,40 @@ function closeSearch() {
 }
 
 const TOPICS = {
-    placements:{emoji:'💼',color:'#6366f1',kw:['placement','placements','package','lpa','salary','recruit','job','offer','placed','company','companies','highest']},
-    admissions:{emoji:'🎓',color:'#10b981',kw:['admission','admissions','apply','kcet','comedk','comed-k','cutoff','eligibility','fee','seat','quota','management']},
-    hostels:{emoji:'🏠',color:'#f59e0b',kw:['hostel','hostels','mess','food court','room','warden','boys hostel','girls hostel','hostel fee']},
-    departments:{emoji:'📚',color:'#a78bfa',kw:['department','cse','ece','mech','civil','ise','eee','aiml','branch','course','program']},
-    campus:{emoji:'🏕️',color:'#34d399',kw:['campus','club','fest','sports','library','wifi','canteen','life','ncc','nss','cultural']},
-    faculty:{emoji:'👨‍🏫',color:'#38bdf8',kw:['faculty','professor','hod','teacher','dean','principal','staff','fac_']},
-    rankings:{emoji:'🏆',color:'#fbbf24',kw:['ranking','nirf','naac','autonomous','accreditation','rating']},
-    innovation:{emoji:'🚀',color:'#f472b6',kw:['team','ashwa','antariksh','vyoma','chimera','astra','innovation','robot','drone','satellite']},
-    research:{emoji:'🔬',color:'#ec4899',kw:['research','coe','centre of excellence','center of excellence','phd','boston','cocs','patent']},
-    contact:{emoji:'📞',color:'#fb923c',kw:['contact','phone','email','address','location','map','reach','transport']},
+    admissions: { emoji: '📚', color: '#6366f1', kw: ['admission', 'apply', 'enroll', 'document', 'tc', 'marks card', 'aapar', 'eligibility', 'standard'] },
+    academics: { emoji: '📖', color: '#10b981', kw: ['academic', 'subject', 'syllabus', 'karnataka', 'state board', 'class 8', 'class 9', 'class 10', 'sslc', 'exam'] },
+    languages: { emoji: '🗣️', color: '#38bdf8', kw: ['language', 'sanskrit', 'kannada', 'english', 'hindi', 'section', 'medium'] },
+    midday: { emoji: '🍱', color: '#f59e0b', kw: ['meal', 'lunch', 'midday', 'mid-day', 'akshaya patra', 'milk', 'ragi', 'egg', 'nutrition'] },
+    facilities: { emoji: '🏗️', color: '#8b5cf6', kw: ['facility', 'infrastructure', 'lab', 'computer', 'library', 'auditorium', 'playground', 'canteen'] },
+    uniform: { emoji: '👗', color: '#ec4899', kw: ['uniform', 'dress', 'badge', 'shoes', 'ribbon', 'dress code'] },
+    clubs: { emoji: '🎯', color: '#f43f5e', kw: ['club', 'ncc', 'guide', 'bugle', 'band', 'activity', 'sports'] },
+    results: { emoji: '📊', color: '#14b8a6', kw: ['result', 'topper', 'marks', 'percentage', 'score', 'sslc', 'banner'] },
+    calendar: { emoji: '📅', color: '#eab308', kw: ['calendar', 'holiday', 'vacation', 'annual day', 'events', 'schedule'] },
+    donate: { emoji: '❤️', color: '#ef4444', kw: ['donate', 'donation', 'support', 'contribute', 'fund', 'charity'] },
+    contact: { emoji: '📞', color: '#fb923c', kw: ['contact', 'phone', 'email', 'address', 'jayanagar', 'headmaster', 'bhat', 'location', 'reach'] }
 };
-const IC = {message:'💬',click:'🖱️',ui:'⚙️',hover:'👆',copy:'📋',typing:'⌨️',scroll:'📜',dwell:'⏱️',focus:'🎯',blur:'💤',visibility:'👁️',session:'🔌'};
+const IC = { message:'💬', click:'🖱️', ui:'⚙️', hover:'👆', copy:'📋', typing:'⌨️', scroll:'📜', dwell:'⏱️', focus:'🎯', blur:'💤', visibility:'👁️', session:'🔌' };
+
+function normalizeLog(l) {
+    const data = l.data || l.m || l.metaData || {};
+    return {
+        s: l.sessionId || l.s || 'sid_anon',
+        q: l.query || l.q || l.query_text || '',
+        i: l.intent || l.i || l.interaction_id || '',
+        d: l.timestamp || l.d || l.createdAt || l.created_at || new Date().toISOString(),
+        t: l.eventType || l.t || l.event_type || 'message',
+        m: data
+    };
+}
 
 async function getLogs() {
     // 1. Try Vercel Backend API (/api/logs)
     try {
-        const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs') : '/api/logs';
+        const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs?instituteId=rvghs') : '/api/logs?instituteId=rvghs';
         const res = await fetch(nodeUrl, { signal: AbortSignal.timeout(2500) });
         if (res.ok) {
             const data = await res.json();
-            if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) return data.logs;
+            if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) return data.logs.map(normalizeLog);
         }
     } catch(e) {}
 
@@ -276,7 +289,7 @@ async function getLogs() {
             const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
             if (res.ok) {
                 const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) return data;
+                if (Array.isArray(data) && data.length > 0) return data.map(normalizeLog);
             }
         } catch(err) {}
     }
@@ -286,11 +299,30 @@ async function getLogs() {
         const local = localStorage.getItem('rvghs_logs');
         if (local) {
             const parsed = JSON.parse(local);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(normalizeLog);
         }
     } catch(e) {}
 
-    return [];
+    return getInitialSeedData().map(normalizeLog);
+}
+
+function getInitialSeedData() {
+    const now = Date.now();
+    const sid1 = 'sid_live_742';
+    const sid2 = 'sid_live_389';
+    const sid3 = 'sid_live_512';
+    const ts = (ms) => new Date(now - ms).toISOString();
+
+    return [
+        { s: sid1, q: "Admissions for 8th standard", i: "admissions", d: ts(180000), t: 'message' },
+        { s: sid1, q: "Required Documents", i: "click:Required Documents", d: ts(150000), t: 'click' },
+        { s: sid1, q: "SATS Transfer Certificate", i: "copy:SATS Transfer Certificate", d: ts(120000), t: 'copy' },
+        { s: sid2, q: "School Timings", i: "timings", d: ts(360000), t: 'message' },
+        { s: sid2, q: "Mid-day meal schedule", i: "midday", d: ts(300000), t: 'message' },
+        { s: sid2, q: "Contact Office", i: "click:Contact Office", d: ts(240000), t: 'click' },
+        { s: sid3, q: "Board exam results", i: "results", d: ts(600000), t: 'message' },
+        { s: sid3, q: "Support & Donate Online", i: "click:Support & Donate Online", d: ts(520000), t: 'click' }
+    ];
 }
 
 function classify(l){
@@ -305,6 +337,7 @@ function classify(l){
 
 async function render(){
     const logs = await getLogs();
+    window.allLogs = logs;
     renderChips(logs);
     renderRanking(logs);
     renderChart(logs);
@@ -321,7 +354,7 @@ function renderChips(logs){
     const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
     if(!sorted.length){ el.innerHTML='<div class="empty">No keywords detected yet</div>'; return; }
     el.innerHTML = sorted.map(([topic,count])=>{
-        const cfg = TOPICS[topic];
+        const cfg = TOPICS[topic] || { emoji:'💬', color:'#6366f1' };
         const isActive = activeDrill === topic;
         return `<div class="chip ${isActive?'active':''}" data-topic="${topic}" style="${isActive ? 'background:'+cfg.color+'15;border-color:'+cfg.color+';box-shadow:0 4px 15px '+cfg.color+'30' : 'border-color:'+cfg.color+'30'}" onclick="openDrill('${topic}')">
             <span class="emoji">${cfg.emoji}</span>${topic.charAt(0).toUpperCase()+topic.slice(1)}<span class="cnt" style="background:${cfg.color}20;color:${cfg.color}">${count}</span>
@@ -331,8 +364,8 @@ function renderChips(logs){
 
 function openDrill(topic){
     activeDrill = topic;
-    const cfg = TOPICS[topic];
-    const logs = getLogs();
+    const cfg = TOPICS[topic] || { emoji:'💬', color:'#6366f1' };
+    const logs = window.allLogs || [];
     const related = logs.filter(l=> classify(l)===topic);
 
     document.getElementById('defaultView').style.display='none';
