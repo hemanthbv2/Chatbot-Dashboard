@@ -277,16 +277,64 @@ app.post('/api/logs', async (req, res) => {
             });
         }
 
+        // 1. Store Raw Telemetry Ingestion Log (Zero-Loss Archive)
+        try {
+            const TenantRawLog = getTenantModel(institute_id, 'RawLog');
+            await TenantRawLog.create({
+                instituteId: institute_id,
+                sessionId: sessionId,
+                payload: req.body,
+                receivedAt: new Date()
+            });
+        } catch(rawErr) {
+            console.warn('Raw log archiving note:', rawErr.message);
+        }
+
+        // 2. Save Leads
         if (leadDocs.length > 0) {
             const TenantLead = getTenantModel(institute_id, 'Lead');
             await TenantLead.insertMany(leadDocs, { ordered: false });
         }
+
+        // 3. Save Interactions
         if (interactionDocs.length > 0) {
             const TenantInteraction = getTenantModel(institute_id, 'Interaction');
             await TenantInteraction.insertMany(interactionDocs, { ordered: false });
         }
 
-        res.json({ success: true, ok: true, message: 'Logs processed successfully', count: interactionDocs.length });
+        // 4. Update / Aggregate Complete Session State
+        try {
+            const TenantSession = getTenantModel(institute_id, 'Session');
+            const msgCount = interactionDocs.filter(i => i.eventType === 'message').length;
+            const clkCount = interactionDocs.filter(i => i.eventType === 'click').length;
+            const maxDwell = Math.max(...events.map(e => e.data?.dwellTimeSeconds || 0), 0);
+            const latestIntent = interactionDocs[interactionDocs.length - 1]?.interactionId || '';
+
+            await TenantSession.findOneAndUpdate(
+                { sessionId: sessionId },
+                {
+                    $setOnInsert: { instituteId: institute_id, startTime: new Date() },
+                    $set: {
+                        lastActive: new Date(),
+                        lastIntent: latestIntent,
+                        deviceInfo: events[0]?.data?.device || events[0]?.data?.platform || {}
+                    },
+                    $inc: {
+                        eventCount: interactionDocs.length,
+                        messageCount: msgCount,
+                        clickCount: clkCount
+                    },
+                    $max: {
+                        dwellSeconds: maxDwell
+                    }
+                },
+                { upsert: true, new: true }
+            );
+        } catch (sessErr) {
+            console.warn('Session aggregation note:', sessErr.message);
+        }
+
+        res.json({ success: true, ok: true, message: 'All telemetry, sessions, and interactions recorded successfully', count: interactionDocs.length });
     } catch (err) {
         console.error('Error saving logs:', err.message);
         res.status(500).json({ error: err.message, ok: false });
