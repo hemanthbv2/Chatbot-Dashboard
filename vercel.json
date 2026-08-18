@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "builds": [
     {
       "src": "server.js",
@@ -14,6 +15,66 @@
     {
       "src": "/api/(.*)",
       "dest": "server.js"
+    },
+    {
+      "src": "/dashboard/sessions",
+      "dest": "public/rvghs-dashboard/sessions.html"
+    },
+    {
+      "src": "/dashboard/interactions",
+      "dest": "public/rvghs-dashboard/interactions.html"
+    },
+    {
+      "src": "/dashboard/analytics",
+      "dest": "public/rvghs-dashboard/analytics.html"
+    },
+    {
+      "src": "/dashboard/leads",
+      "dest": "public/rvghs-dashboard/leads.html"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "public/rvghs-dashboard/index.html"
+    },
+    {
+      "src": "/rvghs-dashboard/sessions",
+      "dest": "public/rvghs-dashboard/sessions.html"
+    },
+    {
+      "src": "/rvghs-dashboard/interactions",
+      "dest": "public/rvghs-dashboard/interactions.html"
+    },
+    {
+      "src": "/rvghs-dashboard/analytics",
+      "dest": "public/rvghs-dashboard/analytics.html"
+    },
+    {
+      "src": "/rvghs-dashboard/leads",
+      "dest": "public/rvghs-dashboard/leads.html"
+    },
+    {
+      "src": "/rvghs-dashboard",
+      "dest": "public/rvghs-dashboard/index.html"
+    },
+    {
+      "src": "/rvcn-dashboard/sessions",
+      "dest": "public/rvcn-dashboard/sessions.html"
+    },
+    {
+      "src": "/rvcn-dashboard/interactions",
+      "dest": "public/rvcn-dashboard/interactions.html"
+    },
+    {
+      "src": "/rvcn-dashboard/analytics",
+      "dest": "public/rvcn-dashboard/analytics.html"
+    },
+    {
+      "src": "/rvcn-dashboard/leads",
+      "dest": "public/rvcn-dashboard/leads.html"
+    },
+    {
+      "src": "/rvcn-dashboard",
+      "dest": "public/rvcn-dashboard/index.html"
     },
     {
       "src": "/(.*)",
