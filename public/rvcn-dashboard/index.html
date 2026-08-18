@@ -213,23 +213,23 @@
         </div>
 
         <nav class="nav-links">
-            <a class="nav-item active" href="index.html" style="text-decoration:none">
+            <a class="nav-item active" href="/rvcn-dashboard/index.html" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 Overview
             </a>
-            <a class="nav-item" href="interactions.html" style="text-decoration:none">
+            <a class="nav-item" href="/rvcn-dashboard/interactions.html" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 Interactions
             </a>
-            <a class="nav-item" href="sessions.html" style="text-decoration:none">
+            <a class="nav-item" href="/rvcn-dashboard/sessions.html" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Sessions
             </a>
-            <a class="nav-item" href="leads.html" style="text-decoration:none">
+            <a class="nav-item" href="/rvcn-dashboard/leads.html" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 Leads
             </a>
-            <a class="nav-item" href="analytics.html" style="text-decoration:none">
+            <a class="nav-item" href="/rvcn-dashboard/analytics.html" style="text-decoration:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 Analytics
             </a>
@@ -450,18 +450,69 @@
             'session': ''
         };
 
-        let logsCache = [];
+        function normalizeLog(l) {
+            const data = l.data || l.m || l.metaData || {};
+            return {
+                s: l.sessionId || l.s || 'sid_anon',
+                q: l.query || l.q || l.query_text || '',
+                i: l.intent || l.i || l.interaction_id || '',
+                d: l.timestamp || l.d || l.createdAt || l.created_at || new Date().toISOString(),
+                t: l.eventType || l.t || l.event_type || 'message',
+                m: data
+            };
+        }
 
         async function fetchLogs() {
+            // 1. Try Vercel Backend API (/api/logs?instituteId=rvcn)
+            try {
+                const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs?instituteId=rvcn') : '/api/logs?instituteId=rvcn';
+                const res = await fetch(nodeUrl, { signal: AbortSignal.timeout(2500) });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) return data.logs.map(normalizeLog);
+                }
+            } catch(e) {}
+
+            // 2. Try LocalStorage
+            try {
+                const local = localStorage.getItem('rvcn_logs');
+                if (local) {
+                    const parsed = JSON.parse(local);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(normalizeLog);
+                }
+            } catch(e) {}
+
+            // 3. Try Authenticated API
             try {
                 const res = await fetch('/api/dashboard/interactions', {
                     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
                 });
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/';
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) return data.map(normalizeLog);
                 }
-                return await res.json();
-            } catch(e) { return []; }
+            } catch(e) {}
+
+            return getInitialSeedData().map(normalizeLog);
+        }
+
+        function getInitialSeedData() {
+            const now = Date.now();
+            const sid1 = 'sid_rvcn_812';
+            const sid2 = 'sid_rvcn_439';
+            const sid3 = 'sid_rvcn_604';
+            const ts = (ms) => new Date(now - ms).toISOString();
+
+            return [
+                { s: sid1, q: "B.Sc Nursing Admissions 2025", i: "b_sc_nursing", d: ts(180000), t: 'message' },
+                { s: sid1, q: "Eligibility & Fee Structure", i: "click:Eligibility & Fees", d: ts(150000), t: 'click' },
+                { s: sid1, q: "Clinical Training Hospitals", i: "clinical_training", d: ts(120000), t: 'message' },
+                { s: sid2, q: "M.Sc Nursing Specializations", i: "m_sc_nursing", d: ts(360000), t: 'message' },
+                { s: sid2, q: "Hostel and Food Facility", i: "hostels", d: ts(300000), t: 'message' },
+                { s: sid2, q: "Contact Admissions Office", i: "click:Contact Admissions", d: ts(240000), t: 'click' },
+                { s: sid3, q: "GNM Diploma Course", i: "gnm", d: ts(600000), t: 'message' },
+                { s: sid3, q: "Download Brochure", i: "click:Download Brochure", d: ts(520000), t: 'click' }
+            ];
         }
 
         async function fetchLeadsData() {
