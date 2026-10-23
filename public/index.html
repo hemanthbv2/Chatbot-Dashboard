@@ -215,13 +215,11 @@
         
         if (token) {
             if (role === 'institute_admin') {
-                if (instituteId === 'rvghs') {
-                    window.location.href = '/rvghs-dashboard/index.html';
-                } else if (instituteId === 'rvcn') {
-                    window.location.href = '/rvcn-dashboard/index.html';
+                if (instituteId) {
+                    window.location.href = `/${instituteId}-dashboard/index.html`;
+                } else {
+                    showDashboard();
                 }
-            } else if (role === 'super_admin') {
-                showDashboard();
             } else {
                 showDashboard();
             }
@@ -249,14 +247,9 @@
                 localStorage.setItem('role', data.role);
                 localStorage.setItem('instituteId', data.instituteId || '');
 
-                if (data.role === 'institute_admin') {
-                    if (data.instituteId === 'rvghs') {
-                        window.location.href = '/rvghs-dashboard/index.html';
-                        return;
-                    } else if (data.instituteId === 'rvcn') {
-                        window.location.href = '/rvcn-dashboard/index.html';
-                        return;
-                    }
+                if (data.role === 'institute_admin' && data.instituteId) {
+                    window.location.href = `/${data.instituteId}-dashboard/index.html`;
+                    return;
                 }
                 window.location.reload();
             } else {

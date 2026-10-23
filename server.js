@@ -80,11 +80,32 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ error: 'Username and password required' });
         }
 
-        // Built-in default credentials mapping
+        // Built-in default credentials mapping (supports both underscored and non-underscored formats)
         const DEFAULT_ACCOUNTS = {
             'admin': { pass: 'admin123', role: 'super_admin', instituteId: null },
+            'superadmin': { pass: 'admin123', role: 'super_admin', instituteId: null },
             'rvghs_admin': { pass: 'rvghs123', role: 'institute_admin', instituteId: 'rvghs' },
-            'rvcn_admin': { pass: 'rvcn123', role: 'institute_admin', instituteId: 'rvcn' }
+            'rvghsadmin': { pass: 'rvghs123', role: 'institute_admin', instituteId: 'rvghs' },
+            'rvcn_admin': { pass: 'rvcn123', role: 'institute_admin', instituteId: 'rvcn' },
+            'rvcnadmin': { pass: 'rvcn123', role: 'institute_admin', instituteId: 'rvcn' },
+            'rvce_admin': { pass: 'rvce123', role: 'institute_admin', instituteId: 'rvce' },
+            'rvceadmin': { pass: 'rvce123', role: 'institute_admin', instituteId: 'rvce' },
+            'rvps_admin': { pass: 'rvps123', role: 'institute_admin', instituteId: 'rvps' },
+            'rvpsadmin': { pass: 'rvps123', role: 'institute_admin', instituteId: 'rvps' },
+            'rvpu_north_admin': { pass: 'rvpu_north123', role: 'institute_admin', instituteId: 'rvpu-north' },
+            'rvpu-northadmin': { pass: 'rvpu_north123', role: 'institute_admin', instituteId: 'rvpu-north' },
+            'rvpu_south_admin': { pass: 'rvpu_south123', role: 'institute_admin', instituteId: 'rvpu-south' },
+            'rvpu-southadmin': { pass: 'rvpu_south123', role: 'institute_admin', instituteId: 'rvpu-south' },
+            'rvpu_ecity_admin': { pass: 'rvpu_ecity123', role: 'institute_admin', instituteId: 'rvpu-ecity' },
+            'rvpu-ecityadmin': { pass: 'rvpu_ecity123', role: 'institute_admin', instituteId: 'rvpu-ecity' },
+            'rvpu_harohalli_admin': { pass: 'rvpu_harohalli123', role: 'institute_admin', instituteId: 'rvpu-harohalli' },
+            'rvpu-harohalliadmin': { pass: 'rvpu_harohalli123', role: 'institute_admin', instituteId: 'rvpu-harohalli' },
+            'ssmrvpu_admin': { pass: 'ssmrvpu123', role: 'institute_admin', instituteId: 'ssmrvpu' },
+            'ssmrvpuadmin': { pass: 'ssmrvpu123', role: 'institute_admin', instituteId: 'ssmrvpu' },
+            'rvpu_mysore_admin': { pass: 'rvpu_mysore123', role: 'institute_admin', instituteId: 'rvpu-mysore' },
+            'rvpu-mysoreadmin': { pass: 'rvpu_mysore123', role: 'institute_admin', instituteId: 'rvpu-mysore' },
+            'nmkrvpu_admin': { pass: 'nmkrvpu123', role: 'institute_admin', instituteId: 'nmkrvpu' },
+            'nmkrvpuadmin': { pass: 'nmkrvpu123', role: 'institute_admin', instituteId: 'nmkrvpu' }
         };
 
         let user = await User.findOne({ username });
@@ -132,55 +153,72 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Database Seeder / Setup Route
+// Database Seeder / Setup Route (All 11 Institutes & Accounts)
 app.post('/api/setup', async (req, res) => {
     try {
         const salt = await bcrypt.genSalt(10);
 
-        // 1. Super Admin (Global Access to All Institutes)
+        const institutes = [
+            { id: 'rvcn', name: 'RV College of Nursing', key: 'rvcn_key_12345' },
+            { id: 'rvce', name: 'RV College of Engineering', key: 'rvce_key_12345' },
+            { id: 'rvps', name: 'RV Public School', key: 'rvps_key_12345' },
+            { id: 'rvghs', name: 'RV Girls High School', key: 'rvghs_key_12345' },
+            { id: 'rvpu-north', name: 'RV PU College North', key: 'rvpu_north_key_12345' },
+            { id: 'rvpu-south', name: 'RV PU College South', key: 'rvpu_south_key_12345' },
+            { id: 'rvpu-ecity', name: 'RV PU College Electronic City', key: 'rvpu_ecity_key_12345' },
+            { id: 'rvpu-harohalli', name: 'RV PU College Harohalli', key: 'rvpu_harohalli_key_12345' },
+            { id: 'ssmrvpu', name: 'SSMRV PU College', key: 'ssmrvpu_key_12345' },
+            { id: 'rvpu-mysore', name: 'RV PU College Mysuru', key: 'rvpu_mysore_key_12345' },
+            { id: 'nmkrvpu', name: 'NMKRV PU College for Women', key: 'nmkrvpu_key_12345' }
+        ];
+
+        // 1. Ensure all institutes exist
+        for (const inst of institutes) {
+            await Institute.findOneAndUpdate(
+                { instituteId: inst.id },
+                { instituteId: inst.id, name: inst.name, apiKey: inst.key, status: 'active' },
+                { upsert: true, new: true }
+            );
+        }
+
+        // 2. Super Admin Accounts
         const superAdminHash = await bcrypt.hash('admin123', salt);
         await User.findOneAndUpdate(
             { username: 'admin' },
             { username: 'admin', passwordHash: superAdminHash, role: 'super_admin', instituteId: null },
             { upsert: true, new: true }
         );
-
-        // 2. RVGHS Institute Admin (RVGHS Only Access)
-        const rvghsHash = await bcrypt.hash('rvghs123', salt);
         await User.findOneAndUpdate(
-            { username: 'rvghs_admin' },
-            { username: 'rvghs_admin', passwordHash: rvghsHash, role: 'institute_admin', instituteId: 'rvghs' },
+            { username: 'superadmin' },
+            { username: 'superadmin', passwordHash: superAdminHash, role: 'super_admin', instituteId: null },
             { upsert: true, new: true }
         );
 
-        // 3. RVCN Institute Admin (RVCN Only Access)
-        const rvcnHash = await bcrypt.hash('rvcn123', salt);
-        await User.findOneAndUpdate(
-            { username: 'rvcn_admin' },
-            { username: 'rvcn_admin', passwordHash: rvcnHash, role: 'institute_admin', instituteId: 'rvcn' },
-            { upsert: true, new: true }
-        );
+        // 3. Institute Admin Accounts (both format variations)
+        for (const inst of institutes) {
+            const pass = (inst.id.replace(/-/g, '_') + '123').toLowerCase();
+            const hash = await bcrypt.hash(pass, salt);
 
-        // 4. Ensure Institutes Exist
-        await Institute.findOneAndUpdate(
-            { instituteId: 'rvghs' },
-            { instituteId: 'rvghs', name: 'RV Girls High School', apiKey: 'rvghs_key_12345', status: 'active' },
-            { upsert: true }
-        );
-        await Institute.findOneAndUpdate(
-            { instituteId: 'rvcn' },
-            { instituteId: 'rvcn', name: 'RV College of Nursing', apiKey: 'rvcn_key_12345', status: 'active' },
-            { upsert: true }
-        );
+            // standard format: rvghsadmin / rvceadmin
+            const cleanId = inst.id.replace(/-/g, '');
+            await User.findOneAndUpdate(
+                { username: cleanId + 'admin' },
+                { username: cleanId + 'admin', passwordHash: hash, role: 'institute_admin', instituteId: inst.id },
+                { upsert: true, new: true }
+            );
+
+            // underscore format: rvghs_admin / rvce_admin
+            const underId = inst.id.replace(/-/g, '_');
+            await User.findOneAndUpdate(
+                { username: underId + '_admin' },
+                { username: underId + '_admin', passwordHash: hash, role: 'institute_admin', instituteId: inst.id },
+                { upsert: true, new: true }
+            );
+        }
 
         res.json({
             ok: true,
-            message: 'Database seeded successfully! You can now log in.',
-            accounts: [
-                { username: 'admin', password: 'admin123', role: 'Super Admin (All Institutes)' },
-                { username: 'rvghs_admin', password: 'rvghs123', role: 'RVGHS Institute Admin' },
-                { username: 'rvcn_admin', password: 'rvcn123', role: 'RVCN Institute Admin' }
-            ]
+            message: 'Database seeded successfully for all 11 institutes! You can now log in.'
         });
     } catch (err) {
         console.error('Setup error:', err.message);
@@ -638,54 +676,7 @@ app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
     }
 });
 
-// Seed Endpoint (For initial setup only, to be removed in production)
-app.post('/api/setup', async (req, res) => {
-    try {
-                const institutes = [
-            { id: 'rvcn', name: 'RV College of Nursing', key: 'rvcn_key_12345' },
-            { id: 'rvce', name: 'RV College of Engineering', key: 'rvce_key_12345' },
-            { id: 'rvps', name: 'RV Public School', key: 'rvps_key_12345' },
-            { id: 'rvghs', name: 'RV Girls High School', key: 'rvghs_key_12345' },
-            { id: 'rvpu-north', name: 'RV PU College North', key: 'rvpu_north_key_12345' },
-            { id: 'rvpu-south', name: 'RV PU College South', key: 'rvpu_south_key_12345' },
-            { id: 'rvpu-ecity', name: 'RV PU College Electronic City', key: 'rvpu_ecity_key_12345' },
-            { id: 'rvpu-harohalli', name: 'RV PU College Harohalli', key: 'rvpu_harohalli_key_12345' },
-            { id: 'ssmrvpu', name: 'SSMRV PU College', key: 'ssmrvpu_key_12345' },
-            { id: 'rvpu-mysore', name: 'RV PU College Mysuru', key: 'rvpu_mysore_key_12345' },
-            { id: 'nmkrvpu', name: 'NMKRV PU College for Women', key: 'nmkrvpu_key_12345' }
-        ];
 
-        // Create Institutes
-        for (const inst of institutes) {
-            const exists = await Institute.findOne({ instituteId: inst.id });
-            if (!exists) {
-                await Institute.create({ instituteId: inst.id, name: inst.name, apiKey: inst.key });
-            }
-        }
-
-        // Create Super Admin (Master)
-        const adminExists = await User.findOne({ username: 'superadmin' });
-        if (!adminExists) {
-            const hash = await bcrypt.hash('admin123', 10);
-            await User.create({ username: 'superadmin', passwordHash: hash, role: 'super_admin' });
-        }
-
-        // Create Institute Admins
-        for (const inst of institutes) {
-            const username = inst.id + 'admin';
-            const password = inst.id + '123';
-            const exists = await User.findOne({ username });
-            if (!exists) {
-                const hash = await bcrypt.hash(password, 10);
-                await User.create({ username, passwordHash: hash, role: 'institute_admin', instituteId: inst.id });
-            }
-        }
-
-        res.json({ message: 'Seed data generated successfully for all 11 institutes (including all 7 RVPU campuses).' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // Serve frontend routing for SPA
 app.use((req, res) => {
