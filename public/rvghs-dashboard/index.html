@@ -471,7 +471,8 @@
 
         async function fetchLeadsData() {
             try {
-                const res = await fetch('/api/dashboard/leads?instituteId=rvghs', { headers: { 'Authorization': 'Bearer ' + token } });
+                const authToken = localStorage.getItem('token');
+                const res = await fetch('/api/dashboard/leads?instituteId=rvghs', { headers: { 'Authorization': 'Bearer ' + authToken } });
                 return await res.json();
             } catch (err) { return []; }
         }
@@ -687,7 +688,7 @@
             }
         }
 
-        function generateTestData() {
+        async function generateTestData() {
             const now = Date.now();
             const sid = 'sid_demo' + Math.floor(Math.random()*1000);
             const ts = (offset) => new Date(now - offset).toISOString();

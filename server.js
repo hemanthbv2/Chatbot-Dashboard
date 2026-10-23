@@ -115,29 +115,53 @@ app.post('/api/logs', async (req, res) => {
             const eventType = e.eventType || 'unknown';
             const metaData = e.data || {};
 
-            // Auto-detect leads (email/phone)
+            // --- Robust Lead Detection Filter ---
             let isLead = (eventType === 'form_submit');
-            let textToScan = JSON.stringify(metaData);
+            let leadPayload = null;
 
+            if (metaData.leadData && typeof metaData.leadData === 'object') {
+                leadPayload = { ...metaData.leadData };
+                isLead = true;
+            } else if (eventType === 'form_submit') {
+                leadPayload = { ...metaData };
+                isLead = true;
+            }
+
+            // Only scan user-entered text (NEVER scan userAgent or browser headers)
+            const textToScan = (metaData.query || metaData.message || (eventType === 'message' ? metaData.elementText : '')) || '';
             const emailMatch = textToScan.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-            const phoneMatch = textToScan.match(/[0-9]{10}/);
+            const phoneMatch = textToScan.match(/\b[6-9]\d{9}\b/);
 
-            if (emailMatch || phoneMatch) isLead = true;
+            // Filter out crawler bots and school domain contact emails
+            const isBotEmail = emailMatch && /claudebot|anthropic|crawler|googlebot|bingbot|yandex|spider/i.test(emailMatch[0]);
+            const isSchoolEmail = emailMatch && /@(rvei\.edu\.in|rvcn\.edu\.in|rvce\.edu\.in|rvghs\.edu\.in|rvps\.edu\.in|rvpucollege\.edu\.in|ssmrv\.edu\.in|nmkrv\.edu\.in)/i.test(emailMatch[0]);
 
-            if (isLead) {
-                let leadPayload = metaData.leadData || metaData;
-                if (!leadPayload.email && emailMatch) leadPayload.email = emailMatch[0];
+            if ((emailMatch && !isBotEmail && !isSchoolEmail) || phoneMatch) {
+                isLead = true;
+                if (!leadPayload) leadPayload = {};
+                if (!leadPayload.email && emailMatch && !isBotEmail && !isSchoolEmail) leadPayload.email = emailMatch[0];
                 if (!leadPayload.phone && phoneMatch) leadPayload.phone = phoneMatch[0];
-                if (!leadPayload.name) {
-                    const nameMatch = textToScan.match(/(?:Name|Full Name)[\:\s]+([a-zA-Z\s]+)(?:Phone|Email|$)/i);
-                    leadPayload.name = nameMatch ? nameMatch[1].trim() : 'Chat Visitor';
-                }
+            }
 
-                leadDocs.push({
-                    instituteId: institute_id,
-                    sessionId: sessionId,
-                    leadData: leadPayload
-                });
+            if (isLead && leadPayload) {
+                const finalEmail = leadPayload.email || '';
+                const finalUa = metaData.userAgent || '';
+                const isBot = /claudebot|anthropic|crawler|googlebot|bingbot|spider/i.test(finalEmail) ||
+                              /claudebot|anthropic|crawler|googlebot|bingbot|spider/i.test(finalUa);
+
+                if (!isBot) {
+                    if (!leadPayload.name) {
+                        const nameMatch = textToScan.match(/(?:Name|Full Name)[\:\s]+([a-zA-Z\s]+)(?:Phone|Email|$)/i);
+                        leadPayload.name = nameMatch ? nameMatch[1].trim() : (eventType === 'form_submit' ? 'Enquiry Visitor' : 'Chat Visitor');
+                    }
+                    delete leadPayload.userAgent;
+
+                    leadDocs.push({
+                        instituteId: institute_id,
+                        sessionId: sessionId,
+                        leadData: leadPayload
+                    });
+                }
             }
 
             // Format interaction
@@ -180,30 +204,109 @@ app.post('/api/logs', async (req, res) => {
     }
 });
 
+
+// 2.1 Direct Telemetry Route (For real-time widget stream dual-write)
+app.post('/api/telemetry', async (req, res) => {
+    try {
+        const { instituteId, instituteName, event, data, timestamp, sessionId } = req.body;
+        const targetInst = instituteId || 'rvpu-north';
+        const sessId = sessionId || ('sess_' + Date.now());
+
+        const TenantInteraction = getTenantModel(targetInst, 'Interaction');
+        const interactionDoc = {
+            instituteId: targetInst,
+            sessionId: sessId,
+            eventType: event || 'interaction',
+            queryText: data ? (data.query || data.message || (typeof data === 'string' ? data : '')) : '',
+            metaData: data || {},
+            createdAt: timestamp ? new Date(timestamp) : new Date()
+        };
+        await TenantInteraction.create(interactionDoc);
+
+        // Auto capture leads
+        if (event === 'lead_submitted' || (data && (data.phone || data.email || data.leadData))) {
+            const TenantLead = getTenantModel(targetInst, 'Lead');
+            await TenantLead.create({
+                instituteId: targetInst,
+                sessionId: sessId,
+                leadData: data.leadData || data,
+                createdAt: timestamp ? new Date(timestamp) : new Date()
+            });
+        }
+
+        res.json({ success: true, message: 'Telemetry successfully logged to Atlas' });
+    } catch (err) {
+        console.error('Telemetry ingestion error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 3. Dashboard Data Routes (Protected)
+app.get('/api/institutes', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role === 'super_admin') {
+            const institutes = await Institute.find({ status: 'active' }).select('instituteId name status');
+            return res.json(institutes);
+        }
+        const institute = await Institute.findOne({ instituteId: req.user.instituteId, status: 'active' }).select('instituteId name status');
+        res.json(institute ? [institute] : []);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
     try {
         const { role, instituteId } = req.user;
         let totalLeads = 0;
         let totalInteractions = 0;
         const activeInstitutes = role === 'super_admin' ? await Institute.countDocuments({ status: 'active' }) : 1;
+        const instituteStats = [];
         
         if (role === 'super_admin') {
             const institutes = await Institute.find({ status: 'active' });
             for (let inst of institutes) {
-                const TenantLead = getTenantModel(inst.instituteId, 'Lead');
-                const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
-                totalLeads += await TenantLead.countDocuments({});
-                totalInteractions += await TenantInteraction.countDocuments({});
+                try {
+                    const TenantLead = getTenantModel(inst.instituteId, 'Lead');
+                    const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
+                    const instLeads = await TenantLead.countDocuments({});
+                    const instInteractions = await TenantInteraction.countDocuments({});
+                    totalLeads += instLeads;
+                    totalInteractions += instInteractions;
+                    instituteStats.push({
+                        instituteId: inst.instituteId,
+                        name: inst.name,
+                        leads: instLeads,
+                        interactions: instInteractions,
+                        status: inst.status
+                    });
+                } catch (e) {
+                    console.error(`Error loading stats for ${inst.instituteId}:`, e.message);
+                    instituteStats.push({
+                        instituteId: inst.instituteId,
+                        name: inst.name,
+                        leads: 0,
+                        interactions: 0,
+                        status: inst.status
+                    });
+                }
             }
         } else {
             const TenantLead = getTenantModel(instituteId, 'Lead');
             const TenantInteraction = getTenantModel(instituteId, 'Interaction');
             totalLeads = await TenantLead.countDocuments({});
             totalInteractions = await TenantInteraction.countDocuments({});
+            const inst = await Institute.findOne({ instituteId });
+            instituteStats.push({
+                instituteId: instituteId,
+                name: inst ? inst.name : instituteId.toUpperCase(),
+                leads: totalLeads,
+                interactions: totalInteractions,
+                status: 'active'
+            });
         }
         
-        res.json({ leads: totalLeads, interactions: totalInteractions, institutes: activeInstitutes });
+        res.json({ leads: totalLeads, interactions: totalInteractions, institutes: activeInstitutes, instituteStats });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -216,21 +319,28 @@ app.get('/api/dashboard/interactions', authenticateToken, async (req, res) => {
             const institutes = await Institute.find({ status: 'active' });
             let allInteractions = [];
             for (let inst of institutes) {
-                const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
-                const interactions = await TenantInteraction.find({}).sort({ createdAt: -1 }).limit(100).lean();
-                interactions.forEach(i => i.instituteId = inst.instituteId);
-                allInteractions = allInteractions.concat(interactions);
+                try {
+                    const TenantInteraction = getTenantModel(inst.instituteId, 'Interaction');
+                    const interactions = await TenantInteraction.find({}).sort({ createdAt: -1 }).limit(1000).lean();
+                    interactions.forEach(i => i.instituteId = inst.instituteId);
+                    allInteractions = allInteractions.concat(interactions);
+                } catch (e) {
+                    console.error(`Error loading interactions for ${inst.instituteId}:`, e.message);
+                }
             }
-            allInteractions.sort((a, b) => b.createdAt - a.createdAt);
-            allInteractions = allInteractions.slice(0, 1000);
+            allInteractions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            allInteractions = allInteractions.slice(0, 2000);
             
             const formattedLogs = allInteractions.map(log => {
                 const data = log.metaData || {};
+                const dateIso = log.createdAt ? (log.createdAt.toISOString ? log.createdAt.toISOString() : new Date(log.createdAt).toISOString()) : new Date().toISOString();
                 return {
                     s: log.sessionId,
                     t: log.eventType || 'interaction',
                     i: log.interactionId || 'unknown',
-                    d: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                    d: dateIso,
+                    timestamp: dateIso,
+                    createdAt: dateIso,
                     q: log.queryText || '',
                     m: log.metaData || {},
                     instituteId: log.instituteId,
@@ -245,17 +355,20 @@ app.get('/api/dashboard/interactions', authenticateToken, async (req, res) => {
         const TenantInteraction = getTenantModel(targetInstitute, 'Interaction');
         const interactions = await TenantInteraction.find({})
             .sort({ createdAt: -1 })
-            .limit(1000)
+            .limit(1500)
             .lean();
 
         // Map Interaction documents to the expected dashboard format
         const formattedLogs = interactions.map(log => {
             const data = log.metaData || {};
+            const dateIso = log.createdAt ? (log.createdAt.toISOString ? log.createdAt.toISOString() : new Date(log.createdAt).toISOString()) : new Date().toISOString();
             return {
                 s: log.sessionId,
                 t: log.eventType || 'interaction',
                 i: log.interactionId || 'unknown',
-                d: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                d: dateIso,
+                timestamp: dateIso,
+                createdAt: dateIso,
                 q: log.queryText || '',
                 m: log.metaData || {},
                 instituteId: targetInstitute,
@@ -276,18 +389,24 @@ app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
             const institutes = await Institute.find({ status: 'active' });
             let allLeads = [];
             for (let inst of institutes) {
-                const TenantLead = getTenantModel(inst.instituteId, 'Lead');
-                const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(50).lean();
-                leads.forEach(l => l.instituteId = inst.instituteId);
-                allLeads = allLeads.concat(leads);
+                try {
+                    const TenantLead = getTenantModel(inst.instituteId, 'Lead');
+                    const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(100).lean();
+                    leads.forEach(l => l.instituteId = inst.instituteId);
+                    allLeads = allLeads.concat(leads);
+                } catch (e) {
+                    console.error(`Error loading leads for ${inst.instituteId}:`, e.message);
+                }
             }
-            allLeads.sort((a, b) => b.createdAt - a.createdAt);
-            allLeads = allLeads.slice(0, 50);
+            allLeads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            allLeads = allLeads.slice(0, 200);
             
             const formattedLeads = allLeads.map(l => ({
                 sessionId: l.sessionId,
                 timestamp: l.createdAt,
+                createdAt: l.createdAt,
                 data: l.leadData,
+                leadData: l.leadData,
                 instituteId: l.instituteId
             }));
             return res.json(formattedLeads);
@@ -296,13 +415,15 @@ app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
         let targetInstitute = req.user.role === 'super_admin' ? req.query.instituteId : req.user.instituteId;
         
         const TenantLead = getTenantModel(targetInstitute, 'Lead');
-        const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(50).lean();
+        const leads = await TenantLead.find({}).sort({ createdAt: -1 }).limit(100).lean();
         
-        // Map to match the frontend expected format
+        // Map to match both frontend expected formats (data/leadData and timestamp/createdAt)
         const formattedLeads = leads.map(l => ({
             sessionId: l.sessionId,
             timestamp: l.createdAt,
+            createdAt: l.createdAt,
             data: l.leadData,
+            leadData: l.leadData,
             instituteId: targetInstitute
         }));
         
@@ -315,11 +436,18 @@ app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
 // Seed Endpoint (For initial setup only, to be removed in production)
 app.post('/api/setup', async (req, res) => {
     try {
-        const institutes = [
+                const institutes = [
             { id: 'rvcn', name: 'RV College of Nursing', key: 'rvcn_key_12345' },
             { id: 'rvce', name: 'RV College of Engineering', key: 'rvce_key_12345' },
             { id: 'rvps', name: 'RV Public School', key: 'rvps_key_12345' },
-            { id: 'rvghs', name: 'RV Girls High School', key: 'rvghs_key_12345' }
+            { id: 'rvghs', name: 'RV Girls High School', key: 'rvghs_key_12345' },
+            { id: 'rvpu-north', name: 'RV PU College North', key: 'rvpu_north_key_12345' },
+            { id: 'rvpu-south', name: 'RV PU College South', key: 'rvpu_south_key_12345' },
+            { id: 'rvpu-ecity', name: 'RV PU College Electronic City', key: 'rvpu_ecity_key_12345' },
+            { id: 'rvpu-harohalli', name: 'RV PU College Harohalli', key: 'rvpu_harohalli_key_12345' },
+            { id: 'ssmrvpu', name: 'SSMRV PU College', key: 'ssmrvpu_key_12345' },
+            { id: 'rvpu-mysore', name: 'RV PU College Mysuru', key: 'rvpu_mysore_key_12345' },
+            { id: 'nmkrvpu', name: 'NMKRV PU College for Women', key: 'nmkrvpu_key_12345' }
         ];
 
         // Create Institutes
@@ -348,7 +476,7 @@ app.post('/api/setup', async (req, res) => {
             }
         }
 
-        res.json({ message: 'Seed data generated successfully for all 5 institutes.' });
+        res.json({ message: 'Seed data generated successfully for all 11 institutes (including all 7 RVPU campuses).' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

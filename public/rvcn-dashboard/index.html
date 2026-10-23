@@ -459,8 +459,9 @@
 
         async function fetchLogs() {
             try {
-                const res = await fetch('/api/dashboard/interactions', {
-                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                const authToken = localStorage.getItem('token');
+                const res = await fetch('/api/dashboard/interactions?instituteId=rvcn', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
                 });
                 if (res.status === 401 || res.status === 403) {
                     window.location.href = '/';
@@ -471,7 +472,8 @@
 
         async function fetchLeadsData() {
             try {
-                const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': 'Bearer ' + token } });
+                const authToken = localStorage.getItem('token');
+                const res = await fetch('/api/dashboard/leads?instituteId=rvcn', { headers: { 'Authorization': 'Bearer ' + authToken } });
                 return await res.json();
             } catch (err) { return []; }
         }
@@ -687,7 +689,7 @@
             }
         }
 
-        function generateTestData() {
+        async function generateTestData() {
             const now = Date.now();
             const sid = 'sid_demo' + Math.floor(Math.random()*1000);
             const ts = (offset) => new Date(now - offset).toISOString();

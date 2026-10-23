@@ -137,7 +137,8 @@ h1{font-size:24px;font-weight:800;margin-bottom:4px}
 <script>
     async function fetchLeadsData() {
         try {
-            const res = await fetch('/api/dashboard/leads?instituteId=rvghs', { headers: { 'Authorization': 'Bearer ' + token } });
+            const authToken = localStorage.getItem('token');
+            const res = await fetch('/api/dashboard/leads?instituteId=rvghs', { headers: { 'Authorization': 'Bearer ' + authToken } });
             return await res.json();
         } catch (err) { return []; }
     }
