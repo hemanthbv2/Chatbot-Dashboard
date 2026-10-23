@@ -20,6 +20,22 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chatbot_da
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serverless URL normalization middleware
+app.use((req, res, next) => {
+    if (!req.url.startsWith('/api') && (
+        req.url.startsWith('/auth') || 
+        req.url.startsWith('/setup') || 
+        req.url.startsWith('/logs') || 
+        req.url.startsWith('/dashboard') || 
+        req.url.startsWith('/institutes') || 
+        req.url.startsWith('/telemetry')
+    )) {
+        req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serverless / Atlas Database Connection Middleware
@@ -684,7 +700,7 @@ app.use((req, res) => {
 });
 
 // Start the server (ignored by Vercel, used for localhost)
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
     });
