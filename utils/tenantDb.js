@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 // Import schemas directly
 const leadSchema = require('../models/Lead');
 const interactionSchema = require('../models/Interaction');
+const sessionSchema = require('../models/Session');
+const rawLogSchema = require('../models/RawLog');
 
 // Cache connections so we don't open a new one for every request
 const tenantConnections = {};
@@ -24,10 +26,11 @@ const getTenantModel = (instituteId, modelName) => {
     const tenantDb = tenantConnections[instituteId];
 
     // 3. Bind and return the requested model to the tenant database
-    // Mongoose automatically caches the model internally for this connection
     let schema;
     if (modelName === 'Lead') schema = leadSchema;
     else if (modelName === 'Interaction') schema = interactionSchema;
+    else if (modelName === 'Session') schema = sessionSchema;
+    else if (modelName === 'RawLog') schema = rawLogSchema;
     else throw new Error(`Model ${modelName} not supported in tenant db`);
 
     return tenantDb.model(modelName, schema);

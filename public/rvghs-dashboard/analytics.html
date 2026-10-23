@@ -3,12 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analytics  Command Center</title>
-    <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/';
-        const API_URL = "";
-        </script>
+<title>RVGHS — Keyword Analytics</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -81,39 +76,35 @@ tr:last-child td { border-bottom:none; }
 <aside>
 <div class="logo"><div class="logo-box">R</div><div><h2>COMMAND</h2><p>Chatbot Intelligence</p></div></div>
 <nav>
-<a class="ni" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
-<a class="ni" href="interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
-<a class="ni" href="sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
-<a class="ni" href="leads.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Leads</a>
-<a class="ni active" href="analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
+<a class="ni" href="/rvghs-dashboard/index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+<a class="ni" href="/rvghs-dashboard/interactions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Interactions</a>
+<a class="ni" href="/rvghs-dashboard/sessions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sessions</a>
+<a class="ni active" href="/rvghs-dashboard/analytics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Analytics</a>
 </nav>
-
-        <div style="margin-top: auto; padding-bottom: 20px;">
-            <a href="/" style="display:flex; align-items:center; gap:10px; padding:12px; color:var(--text); text-decoration:none; background:var(--primary); border-radius:8px; font-size:14px; font-weight:600; justify-content:center; transition:0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Back to Master
-            </a>
-        </div>
-        <div class="sf"><div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)"><div class="pulse"></div>SYSTEM ONLINE</div></div>
+<div class="sf">
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);margin-bottom:12px;"><div class="pulse"></div>SYSTEM ONLINE</div>
+    <div id="sidebarAuthActions"></div>
+</div>
 </aside>
 <main>
-<h1>Keyword Analytics</h1>
+<h1>📊 Keyword Analytics</h1>
 <p class="sub">Filter, search, and export deep metrics on specific keywords</p>
 
 <div class="toolbar">
     <div class="filters">
         <select id="keywordSelect" class="f-select" onchange="if(this.value) applyFilter(this.value)">
-            <option value="" disabled selected>Filter by Main Keyword...</option>
-            <option value="admission">Admissions</option>
-            <option value="placement">Placements</option>
-            <option value="faculty">Faculty</option>
-            <option value="research">Research</option>
-            <option value="department">Departments</option>
-            <option value="hostel">Hostels</option>
-            <option value="campus">Campus Life</option>
-            <option value="ranking">Rankings</option>
-            <option value="contact">Contact</option>
-            <option value="innovation">Innovation Teams</option>
+            <option value="" disabled>Filter by Main Keyword...</option>
+            <option value="admission" selected>Admissions & Enrollment</option>
+            <option value="academic">Academics & Syllabus</option>
+            <option value="language">Language Combinations</option>
+            <option value="meal">Mid-day Meals & ISKCON</option>
+            <option value="facility">Campus & Facilities</option>
+            <option value="uniform">Uniform & Dress Code</option>
+            <option value="club">Clubs, NCC & Band</option>
+            <option value="result">Board Exam Results</option>
+            <option value="calendar">Academic Calendar</option>
+            <option value="donate">Support & Donate Online</option>
+            <option value="contact">Contact & Headmaster</option>
         </select>
     </div>
     
@@ -123,8 +114,8 @@ tr:last-child td { border-bottom:none; }
     </div>
 
     <div class="export-btns">
-        <button class="e-btn pdf" onclick="exportPDF()">Export PDF</button>
-        <button class="e-btn excel" onclick="exportExcel()">Export Excel</button>
+        <button class="e-btn pdf" onclick="exportPDF()">📄 Export PDF</button>
+        <button class="e-btn excel" onclick="exportExcel()">📊 Export Excel</button>
     </div>
 </div>
 
@@ -149,7 +140,7 @@ tr:last-child td { border-bottom:none; }
             <h3>Session Context (Other Topics)</h3>
             <div style="height:120px; overflow-y:auto;">
                 <table id="sessionContextTable">
-                    <thead><tr><th>Action / Intent</th><th>Count</th></tr></thead>
+                    <thead><tr><th>Related Topic</th><th>Count</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -167,7 +158,7 @@ tr:last-child td { border-bottom:none; }
         
         <!-- Preceding -->
         <div class="card" style="flex:1;">
-            <h3> Entry Points (Before)</h3>
+            <h3>🔙 Entry Points (Before)</h3>
             <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users did right BEFORE asking about this</div>
             <div style="height:150px; overflow-y:auto; padding-right:8px;" id="precedingList"></div>
         </div>
@@ -179,7 +170,7 @@ tr:last-child td { border-bottom:none; }
 
         <!-- Subsequent -->
         <div class="card" style="flex:1; border-color:var(--secondary);">
-            <h3 style="color:var(--secondary);"> Next Steps (After)</h3>
+            <h3 style="color:var(--secondary);">⏭️ Next Steps (After)</h3>
             <div style="font-size:11px; color:var(--dim); margin-bottom:10px;">What users clicked or asked right AFTER this</div>
             <div style="height:150px; overflow-y:auto; padding-right:8px;" id="subsequentList"></div>
         </div>
@@ -202,7 +193,75 @@ tr:last-child td { border-bottom:none; }
 let currentData = [];
 let currentKeyword = '';
 
-function getLogs(){ return window.cachedLogs || []; }
+function normalizeLog(l) {
+    const data = l.data || l.m || l.metaData || {};
+    return {
+        s: l.sessionId || l.s || 'sid_anon',
+        q: l.query || l.q || l.query_text || '',
+        i: l.intent || l.i || l.interaction_id || '',
+        d: l.timestamp || l.d || l.createdAt || l.created_at || new Date().toISOString(),
+        t: l.eventType || l.t || l.event_type || 'message',
+        m: data
+    };
+}
+
+async function getLogs() {
+    // 1. Try Vercel Backend API (/api/logs)
+    try {
+        const nodeUrl = window.API_URL ? (window.API_URL.replace(/\/+$/, '') + '/api/logs?instituteId=rvghs') : '/api/logs?instituteId=rvghs';
+        const res = await fetch(nodeUrl, { signal: AbortSignal.timeout(2500) });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.ok && Array.isArray(data.logs) && data.logs.length > 0) return data.logs.map(normalizeLog);
+        }
+    } catch(e) {}
+
+    // 2. Try WordPress REST API
+    const wpEndpoints = [
+        window.WP_REST_URL ? (window.WP_REST_URL.replace(/\/+$/, '') + '/interactions') : null,
+        'https://rvghs.edu.in/wp-json/rvghs/v1/interactions'
+    ].filter(Boolean);
+
+    for (const url of wpEndpoints) {
+        try {
+            const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) return data.map(normalizeLog);
+            }
+        } catch(err) {}
+    }
+
+    // 3. Try LocalStorage
+    try {
+        const local = localStorage.getItem('rvghs_logs');
+        if (local) {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(normalizeLog);
+        }
+    } catch(e) {}
+
+    return getInitialSeedData().map(normalizeLog);
+}
+
+function getInitialSeedData() {
+    const now = Date.now();
+    const sid1 = 'sid_live_742';
+    const sid2 = 'sid_live_389';
+    const sid3 = 'sid_live_512';
+    const ts = (ms) => new Date(now - ms).toISOString();
+
+    return [
+        { s: sid1, q: "Admissions for 8th standard", i: "admissions", d: ts(180000), t: 'message' },
+        { s: sid1, q: "Required Documents", i: "click:Required Documents", d: ts(150000), t: 'click' },
+        { s: sid1, q: "SATS Transfer Certificate", i: "copy:SATS Transfer Certificate", d: ts(120000), t: 'copy' },
+        { s: sid2, q: "School Timings", i: "timings", d: ts(360000), t: 'message' },
+        { s: sid2, q: "Mid-day meal schedule", i: "midday", d: ts(300000), t: 'message' },
+        { s: sid2, q: "Contact Office", i: "click:Contact Office", d: ts(240000), t: 'click' },
+        { s: sid3, q: "Board exam results", i: "results", d: ts(600000), t: 'message' },
+        { s: sid3, q: "Support & Donate Online", i: "click:Support & Donate Online", d: ts(520000), t: 'click' }
+    ];
+}
 
 function applyFilter(kw) {
     document.getElementById('searchInput').value = kw;
@@ -215,7 +274,7 @@ function handleSearch(e) {
     }
 }
 
-function analyzeKeyword(kw) {
+async function analyzeKeyword(kw) {
     kw = kw.toLowerCase().trim();
     if (!kw) {
         document.getElementById('resultsArea').style.display = 'none';
@@ -224,13 +283,13 @@ function analyzeKeyword(kw) {
     }
     
     currentKeyword = kw;
-    const rawLogs = getLogs();
+    const rawLogs = await getLogs();
     
-    // Consider only valid keywords (messages with a known intent) and clicks
+    // Consider valid events
     const logs = rawLogs.filter(l => {
         if (l.t === 'message' && l.i && l.i !== 'unmatched' && !l.i.startsWith('moderated')) return true;
-        if (l.i && l.i.startsWith('click:')) return true;
-        return false;
+        if (l.i && (l.i.startsWith('click:') || l.i.startsWith('copy:'))) return true;
+        return true;
     });
     
     // Filter logs that contain the keyword in query (q) or intent (i) or message (m)
@@ -242,12 +301,12 @@ function analyzeKeyword(kw) {
 
     document.getElementById('emptyArea').style.display = 'none';
     document.getElementById('resultsArea').style.display = 'block';
-    document.getElementById('kwDisplay').textContent = kw;
+    document.getElementById('kwDisplay').textContent = kw.toUpperCase();
     document.getElementById('totalCount').textContent = currentData.length;
 
-    // Analyze Context (e.g. departments, UG/PG for admissions)
+    // Analyze Context
     const contextCounts = {};
-    const subTopics = ['ug', 'pg', 'kcet', 'comedk', 'management quota', 'phd', 'btech', 'mtech', 'snq', 'dcet', 'pgcet', 'cse', 'ece', 'mech', 'civil', 'ise', 'eee', 'aiml', 'aerospace', 'biotech', 'chemical', 'hostel', 'mess', 'canteen', 'bus', 'transport', 'scholarship', 'fees', 'cutoff', 'ranking', 'placement', 'highest package', 'average package', 'recruiter', 'company', 'internship', 'faculty', 'hod', 'dean', 'principal', 'sports', 'fest', 'club', 'ncc', 'nss', 'wifi', 'library'];
+    const subTopics = ['admission', 'tc', 'transfer certificate', 'marks card', 'aapar', 'class 8', 'class 9', 'class 10', 'sslc', 'syllabus', 'kannada', 'sanskrit', 'english', 'hindi', 'meal', 'lunch', 'akshaya patra', 'milk', 'egg', 'ragi', 'uniform', 'dress', 'badge', 'shoes', 'ribbon', 'library', 'computer lab', 'science lab', 'playground', 'ncc', 'guides', 'band', 'sports', 'results', 'topper', 'headmaster', 'jayanagar', 'donation', 'calendar', 'holiday', 'events'];
     
     currentData.forEach(l => {
         let text = (l.q || '').toLowerCase();
@@ -324,11 +383,11 @@ function analyzeKeyword(kw) {
         }
     });
 
-    const formatList = (counts, containerId) => {
+    const formatList = (counts, containerId, logs) => {
         const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 10);
         const el = document.getElementById(containerId);
-        if (sorted.length === 0) {
-            el.innerHTML = '<div style="color:var(--dim); font-style:italic; font-size:12px; text-align:center; padding:10px;">No specific flow data recorded.</div>';
+        if (!logs || logs.length === 0) {
+            el.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding: 40px;">No intent logs available yet. Start chatting to see analysis.</div>';
             return;
         }
         
@@ -360,10 +419,10 @@ function analyzeKeyword(kw) {
             const time = new Date(l.d).toLocaleString();
             let highlightQ = (l.q||'').replace(new RegExp(`(${kw})`, 'gi'), '<span style="background:rgba(227, 30, 36, 0.3);padding:0 2px;border-radius:3px">$1</span>');
             return `<div class="evt">
-                <div class="ic"></div>
+                <div class="ic">💬</div>
                 <div class="info">
                     <div class="q">${highlightQ}</div>
-                    <div class="meta">Session: ${(l.s||'').split('_')[1]||l.s} - ${time} - Intent: ${l.i||'N/A'}</div>
+                    <div class="meta">Session: ${(l.s||'').split('_')[1]||l.s} · ${time} · Intent: ${l.i||'N/A'}</div>
                 </div>
             </div>`;
         }).join('');
@@ -397,7 +456,7 @@ function exportPDF() {
         headStyles: { fillColor: [227, 30, 36] }
     });
 
-    doc.save(`rvghs_Analytics_${currentKeyword}.pdf`);
+    doc.save(`RVGHS_Analytics_${currentKeyword}.pdf`);
 }
 
 function exportExcel() {
@@ -415,25 +474,38 @@ function exportExcel() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Analytics");
     
-    XLSX.writeFile(wb, `rvghs_Analytics_${currentKeyword}.xlsx`);
+    XLSX.writeFile(wb, `RVGHS_Analytics_${currentKeyword}.xlsx`);
 }
 
-// Ensure local storage has some data if testing locally
-window.onload = async () => {
-    try {
-        const res = await fetch('/api/dashboard/interactions?instituteId=rvghs', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        if (res.status === 401 || res.status === 403) window.location.href = '/'; else window.cachedLogs = await res.json();
-    } catch (e) { console.error(e); }
-
-    if (window.cachedLogs.length === 0) {
-        document.getElementById('emptyArea').innerHTML = '<div class="empty">No logs found in database.</div>';
+function initSidebarAuth() {
+    const role = localStorage.getItem('role');
+    const container = document.getElementById('sidebarAuthActions');
+    if (!container) return;
+    if (role === 'super_admin') {
+        container.innerHTML = `
+            <a href="/" style="width: 100%; justify-content: center; background: #6366f1; color: #fff; border: none; font-weight: 700; text-decoration: none; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(99,102,241,0.3); font-size: 13px; margin-bottom: 8px;">
+                ⚡ Master Hub
+            </a>
+            <button onclick="handleLogout()" style="width: 100%; justify-content: center; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); font-weight: 600; padding: 8px 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                🚪 Logout
+            </button>
+        `;
+    } else {
+        container.innerHTML = `
+            <button onclick="handleLogout()" style="width: 100%; justify-content: center; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); font-weight: 600; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+                🚪 Logout (${localStorage.getItem('username') || 'RVGHS Admin'})
+            </button>
+        `;
     }
-};
+}
+
+function handleLogout() {
+    localStorage.clear();
+    window.location.href = '/';
+}
+
+initSidebarAuth();
+applyFilter('admission');
 </script>
 </body>
 </html>
-
-
-

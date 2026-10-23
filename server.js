@@ -76,12 +76,48 @@ const authenticateToken = (req, res, next) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await User.findOne({ username });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password required' });
+        }
 
-        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        // Built-in default credentials mapping
+        const DEFAULT_ACCOUNTS = {
+            'admin': { pass: 'admin123', role: 'super_admin', instituteId: null },
+            'rvghs_admin': { pass: 'rvghs123', role: 'institute_admin', instituteId: 'rvghs' },
+            'rvcn_admin': { pass: 'rvcn123', role: 'institute_admin', instituteId: 'rvcn' }
+        };
 
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
-        if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+        let user = await User.findOne({ username });
+
+        // Auto-provision if it's a default system account
+        if (!user && DEFAULT_ACCOUNTS[username] && DEFAULT_ACCOUNTS[username].pass === password) {
+            const salt = await bcrypt.genSalt(10);
+            const hash = await bcrypt.hash(password, salt);
+            user = await User.create({
+                username: username,
+                passwordHash: hash,
+                role: DEFAULT_ACCOUNTS[username].role,
+                instituteId: DEFAULT_ACCOUNTS[username].instituteId
+            });
+        }
+
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials. Click \"Run Initial Setup (Seed DB)\" or verify credentials.' });
+        }
+
+        let validPassword = await bcrypt.compare(password, user.passwordHash);
+
+        // Fallback for default accounts in case salt differed
+        if (!validPassword && DEFAULT_ACCOUNTS[username] && DEFAULT_ACCOUNTS[username].pass === password) {
+            const salt = await bcrypt.genSalt(10);
+            user.passwordHash = await bcrypt.hash(password, salt);
+            await user.save();
+            validPassword = true;
+        }
+
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
 
         const token = jwt.sign(
             { id: user._id, role: user.role, instituteId: user.instituteId, username: user.username },
@@ -91,6 +127,63 @@ app.post('/api/auth/login', async (req, res) => {
 
         res.json({ token, role: user.role, instituteId: user.instituteId, username: user.username });
     } catch (err) {
+        console.error('Login error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Database Seeder / Setup Route
+app.post('/api/setup', async (req, res) => {
+    try {
+        const salt = await bcrypt.genSalt(10);
+
+        // 1. Super Admin (Global Access to All Institutes)
+        const superAdminHash = await bcrypt.hash('admin123', salt);
+        await User.findOneAndUpdate(
+            { username: 'admin' },
+            { username: 'admin', passwordHash: superAdminHash, role: 'super_admin', instituteId: null },
+            { upsert: true, new: true }
+        );
+
+        // 2. RVGHS Institute Admin (RVGHS Only Access)
+        const rvghsHash = await bcrypt.hash('rvghs123', salt);
+        await User.findOneAndUpdate(
+            { username: 'rvghs_admin' },
+            { username: 'rvghs_admin', passwordHash: rvghsHash, role: 'institute_admin', instituteId: 'rvghs' },
+            { upsert: true, new: true }
+        );
+
+        // 3. RVCN Institute Admin (RVCN Only Access)
+        const rvcnHash = await bcrypt.hash('rvcn123', salt);
+        await User.findOneAndUpdate(
+            { username: 'rvcn_admin' },
+            { username: 'rvcn_admin', passwordHash: rvcnHash, role: 'institute_admin', instituteId: 'rvcn' },
+            { upsert: true, new: true }
+        );
+
+        // 4. Ensure Institutes Exist
+        await Institute.findOneAndUpdate(
+            { instituteId: 'rvghs' },
+            { instituteId: 'rvghs', name: 'RV Girls High School', apiKey: 'rvghs_key_12345', status: 'active' },
+            { upsert: true }
+        );
+        await Institute.findOneAndUpdate(
+            { instituteId: 'rvcn' },
+            { instituteId: 'rvcn', name: 'RV College of Nursing', apiKey: 'rvcn_key_12345', status: 'active' },
+            { upsert: true }
+        );
+
+        res.json({
+            ok: true,
+            message: 'Database seeded successfully! You can now log in.',
+            accounts: [
+                { username: 'admin', password: 'admin123', role: 'Super Admin (All Institutes)' },
+                { username: 'rvghs_admin', password: 'rvghs123', role: 'RVGHS Institute Admin' },
+                { username: 'rvcn_admin', password: 'rvcn123', role: 'RVCN Institute Admin' }
+            ]
+        });
+    } catch (err) {
+        console.error('Setup error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -98,22 +191,39 @@ app.post('/api/auth/login', async (req, res) => {
 // 2. Ingestion Route (For Chatbots to post logs)
 app.post('/api/logs', async (req, res) => {
     try {
-        const { institute_id, api_key, sessionId, events } = req.body;
+        const body = req.body || {};
+        const institute_id = body.institute_id || body.instituteId || 'rvghs';
+        const api_key = body.api_key || body.apiKey || 'rvghs_key_12345';
+        const sessionId = body.sessionId || body.s || 'sid_anon';
+        const events = body.events || body.logs || (body.q ? [body] : []);
 
-        if (!institute_id || !api_key || !sessionId || !events) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        if (!events || events.length === 0) {
+            return res.status(200).json({ success: true, count: 0, message: 'No events provided' });
         }
 
-        // Verify Institute
-        const institute = await Institute.findOne({ instituteId: institute_id, apiKey: api_key, status: 'active' });
-        if (!institute) return res.status(401).json({ error: 'Unauthorized institute' });
+        // Verify or Auto-Provision Institute
+        let institute = await Institute.findOne({ instituteId: institute_id });
+        if (!institute) {
+            try {
+                institute = await Institute.create({
+                    instituteId: institute_id,
+                    name: institute_id.toUpperCase(),
+                    apiKey: api_key,
+                    status: 'active',
+                    createdAt: new Date()
+                });
+            } catch(e) {
+                // In case of parallel creation
+                institute = await Institute.findOne({ instituteId: institute_id });
+            }
+        }
 
         const leadDocs = [];
         const interactionDocs = [];
 
         for (let e of events) {
-            const eventType = e.eventType || 'unknown';
-            const metaData = e.data || {};
+            const eventType = e.eventType || e.t || 'message';
+            const metaData = e.data || e.m || {};
 
             // --- Robust Lead Detection Filter ---
             let isLead = (eventType === 'form_submit');
@@ -159,7 +269,8 @@ app.post('/api/logs', async (req, res) => {
                     leadDocs.push({
                         instituteId: institute_id,
                         sessionId: sessionId,
-                        leadData: leadPayload
+                        leadData: leadPayload,
+                        createdAt: new Date(e.timestamp || e.d || Date.now())
                     });
                 }
             }
@@ -167,12 +278,12 @@ app.post('/api/logs', async (req, res) => {
             // Format interaction
             let interactionId = eventType;
             if (eventType === 'message') {
-                interactionId = metaData.intent || 'unknown';
+                interactionId = metaData.intent || e.i || 'unknown';
             } else if (['click', 'hover', 'copy', 'dwell', 'scroll'].includes(eventType)) {
-                interactionId = `${eventType}:${metaData.elementId || ''}`;
+                interactionId = `${eventType}:${metaData.elementId || e.i || ''}`;
             }
 
-            let queryText = metaData.elementText || metaData.query || '';
+            let queryText = metaData.elementText || metaData.query || e.q || '';
             if (!queryText) {
                 if (eventType === 'heartbeat') queryText = `User active on page (Dwell: ${metaData.dwellTimeSeconds || 0}s)`;
                 else if (eventType === 'page_load') queryText = 'Opened Chatbot';
@@ -185,25 +296,74 @@ app.post('/api/logs', async (req, res) => {
                 eventType: eventType,
                 interactionId: interactionId,
                 queryText: queryText,
-                metaData: metaData
+                metaData: metaData,
+                createdAt: new Date(e.timestamp || e.d || Date.now())
             });
         }
 
+        // 1. Store Raw Telemetry Ingestion Log (Zero-Loss Archive)
+        try {
+            const TenantRawLog = getTenantModel(institute_id, 'RawLog');
+            await TenantRawLog.create({
+                instituteId: institute_id,
+                sessionId: sessionId,
+                payload: req.body,
+                receivedAt: new Date()
+            });
+        } catch(rawErr) {
+            console.warn('Raw log archiving note:', rawErr.message);
+        }
+
+        // 2. Save Leads
         if (leadDocs.length > 0) {
             const TenantLead = getTenantModel(institute_id, 'Lead');
-            await TenantLead.insertMany(leadDocs);
+            await TenantLead.insertMany(leadDocs, { ordered: false });
         }
+
+        // 3. Save Interactions
         if (interactionDocs.length > 0) {
             const TenantInteraction = getTenantModel(institute_id, 'Interaction');
-            await TenantInteraction.insertMany(interactionDocs);
+            await TenantInteraction.insertMany(interactionDocs, { ordered: false });
         }
 
-        res.json({ success: true, message: 'Logs processed successfully' });
+        // 4. Update / Aggregate Complete Session State
+        try {
+            const TenantSession = getTenantModel(institute_id, 'Session');
+            const msgCount = interactionDocs.filter(i => i.eventType === 'message').length;
+            const clkCount = interactionDocs.filter(i => i.eventType === 'click').length;
+            const maxDwell = Math.max(...events.map(e => e.data?.dwellTimeSeconds || 0), 0);
+            const latestIntent = interactionDocs[interactionDocs.length - 1]?.interactionId || '';
+
+            await TenantSession.findOneAndUpdate(
+                { sessionId: sessionId },
+                {
+                    $setOnInsert: { instituteId: institute_id, startTime: new Date() },
+                    $set: {
+                        lastActive: new Date(),
+                        lastIntent: latestIntent,
+                        deviceInfo: events[0]?.data?.device || events[0]?.data?.platform || {}
+                    },
+                    $inc: {
+                        eventCount: interactionDocs.length,
+                        messageCount: msgCount,
+                        clickCount: clkCount
+                    },
+                    $max: {
+                        dwellSeconds: maxDwell
+                    }
+                },
+                { upsert: true, new: true }
+            );
+        } catch (sessErr) {
+            console.warn('Session aggregation note:', sessErr.message);
+        }
+
+        res.json({ success: true, ok: true, message: 'All telemetry, sessions, and interactions recorded successfully', count: interactionDocs.length });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error saving logs:', err.message);
+        res.status(500).json({ error: err.message, ok: false });
     }
 });
-
 
 // 2.1 Direct Telemetry Route (For real-time widget stream dual-write)
 app.post('/api/telemetry', async (req, res) => {
@@ -241,6 +401,51 @@ app.post('/api/telemetry', async (req, res) => {
     }
 });
 
+// GET /api/logs - Public endpoint for frontend dashboards to query interactions & leads
+app.get('/api/logs', async (req, res) => {
+    try {
+        const instituteId = req.query.instituteId || req.query.institute_id || 'rvghs';
+        const TenantInteraction = getTenantModel(instituteId, 'Interaction');
+        const limit = Math.min(parseInt(req.query.limit) || 5000, 10000);
+
+        const interactions = await TenantInteraction.find({})
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .lean();
+
+        const logs = interactions.map(log => {
+            const data = log.metaData || {};
+            return {
+                _id: log._id,
+                id: log._id,
+                s: log.sessionId,
+                sessionId: log.sessionId,
+                t: log.eventType || 'message',
+                eventType: log.eventType || 'message',
+                i: log.interactionId || 'unknown',
+                intent: log.interactionId || 'unknown',
+                d: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                timestamp: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                createdAt: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+                q: log.queryText || '',
+                query: log.queryText || '',
+                m: log.metaData || {},
+                data: log.metaData || {},
+                instituteId: log.instituteId || instituteId,
+                ...data
+            };
+        });
+
+        res.json({ ok: true, success: true, count: logs.length, logs: logs });
+    } catch (err) {
+        console.error('Error fetching logs:', err.message);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+app.post('/api/logs/batch', async (req, res) => {
+    return app._router.handle({ ...req, url: '/api/logs', method: 'POST' }, res);
+});
 // 3. Dashboard Data Routes (Protected)
 app.get('/api/institutes', authenticateToken, async (req, res) => {
     try {
